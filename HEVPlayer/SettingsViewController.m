@@ -15,6 +15,7 @@
     UITextField * serverTextField;
     UITextField * actTextField;
     BOOL keyboardIsShowing;
+    UIActivityIndicatorView *theIndicator;
 }
 
 @synthesize settingsTableView;
@@ -160,15 +161,6 @@
     actTextField = nil;
 }
 
-#pragma mark Actions
-
-- (void) showInfoToggled:(id)sender {
-    if ([sender isOn]) {
-        [[NSUserDefaults standardUserDefaults] setValue:@"YES" forKey:@"showInfo"];
-    } else {
-        [[NSUserDefaults standardUserDefaults] setValue:@"NO" forKey:@"showInfo"];
-    }
-}
 
 
 #pragma mark - Table View delegate and data source
@@ -184,8 +176,6 @@
     if (section == 0) {
         return 2;
     } else if (section == 1) {
-        return 1;
-    } else if (section == 2) {
         return 1;
     }
     return 1;
@@ -219,32 +209,13 @@
             if(cell == nil) {
                 cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"styleDefaultCell"];
             }
-            [cell.textLabel setText:@"Open"];
+            [cell.textLabel setText:@"Download"];
             [cell.textLabel setTextAlignment:UITextAlignmentCenter];
             return cell;
         }
     }
-
-    if ([indexPath section] == 1) {
-        static NSString *CellIdentifier = @"ToggleSwitchCell";
-        ToggleSwitchCell *cell = (ToggleSwitchCell *)[tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-        if (cell == nil) {
-            NSArray *nib = [[NSBundle mainBundle] loadNibNamed:@"ToggleSwitchCell"owner:nil options:nil];
-            for (id oneObject in nib)
-                if ([oneObject isKindOfClass:[ToggleSwitchCell class]])
-                    cell = (ToggleSwitchCell *)oneObject;
-        }
-        [[cell label] setText:@"Show Info"];
-        if ([[[NSUserDefaults standardUserDefaults] valueForKey:@"showInfo"] isEqualToString:@"YES"]) {
-            [[cell toggle] setOn:YES];
-        } else {
-            [[cell toggle] setOn:NO];
-        }
-        [[cell toggle] addTarget:self action:@selector(showInfoToggled:) forControlEvents:UIControlEventValueChanged];
-        return cell;
-    }
        
-    if ([indexPath section] == 2) {
+    if ([indexPath section] == 1) {
         UITableViewCell * cell = [tableView dequeueReusableCellWithIdentifier:@"styleValue1Cell"];
         if(cell == nil) {
             cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:@"styleValue1Cell"];
@@ -264,9 +235,6 @@
         header = @"Open Location";
     }
     if (section == 1) {
-        header = @"Settings";
-    }
-    if (section == 2) {
         header = @"Website";
     }
     return header;
@@ -276,11 +244,33 @@
 {
 	NSString *footerText = @"";
     if (section == 0) {
-        footerText = @"Input a valid URL and click Open to play";
-    } else if (section == 1) {
-        footerText = @"show more information about media when playing, such as video size, decode and display FPS, etc.";
+        footerText = @"Input a valid URL and click Download to add it to Movies";
     }
     return footerText;
+}
+
+- (void) downloadFile:(NSString*) urlString
+{    
+    [self performSelectorInBackground:@selector(loadData:) withObject:urlString];
+}
+
+- (void) loadData:(NSString*) urlString
+{
+    NSURL  *url = [NSURL URLWithString:urlString];
+    NSData *urlData = [NSData dataWithContentsOfURL:url];
+    if (urlData)
+    {
+        NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+        NSString *documentsDirectory = [paths objectAtIndex:0];
+        
+        NSString  *filePath = [NSString stringWithFormat:@"%@/%@", documentsDirectory, [url lastPathComponent]];
+        [urlData writeToFile:filePath atomically:YES];
+    }
+    
+    [theIndicator stopAnimating];
+    [theIndicator removeFromSuperview];
+    
+    [self.navigationController popToRootViewControllerAnimated:YES];
 }
 
 - (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -294,16 +284,22 @@
                 return ;
             }
             
-            [[NSUserDefaults standardUserDefaults] setValue:url forKey:@"videoPath"];
             [[NSUserDefaults standardUserDefaults] setValue:url forKey:@"pathHistory"];
             
-            PlayViewController *playViewController =[[PlayViewController alloc] initWithNibName:@"PlayViewController" bundle:nil];
-            [self.navigationController pushViewController:playViewController animated:YES];
+            UIActivityIndicatorView *indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
+            [self.view insertSubview:indicator aboveSubview:self.settingsTableView];
+            indicator.center = self.view.center;
+            [indicator startAnimating];
+            
+            theIndicator = indicator;
+            
+            [self loadData:url];
+                        
             return;
         }
     }
     
-    if ([indexPath section] == 2) {
+    if ([indexPath section] == 1) {
         [tableView deselectRowAtIndexPath:indexPath animated:YES];
         [[UIApplication sharedApplication] openURL:[[NSURL alloc] initWithString:@"http://www.xhevc.com"]];
         return;

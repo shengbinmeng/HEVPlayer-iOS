@@ -7,13 +7,28 @@
 //
 
 #import "MoviePlayer.h"
+#import <sys/time.h>
+#import "interface/decoder.h"
+extern "C"{
+#include "utils/utils.h"
+}
+
+extern "C" void yuv420_2_rgb8888_neon(uint8_t *dst_ptr,
+                                  const uint8_t *y_ptr,
+                                  const uint8_t *u_ptr,
+                                  const uint8_t *v_ptr,
+                                  int      width,
+                                  int      height,
+                                  int y_pitch,
+                                  int uv_pitch,
+                                  int rgb_pitch);
 
 @implementation MoviePlayer {
     NSString * moviePath;
     NSThread *decodeThread;
     int frameWidth, frameHeight;
-    int displayWidth, displayHeight;
-
+    uint8_t *rgb_data;
+    bool stopRequest;
 }
 
 - (void) setOutputViews:(UIImageView*)anImageView :(UILabel*)anInfoLabel
@@ -24,8 +39,15 @@
 
 - (int) openMovie:(NSString*) path {
     moviePath = path;
+	if(!fopen([moviePath UTF8String], "rb")) {
+		lent_log(NULL, LENT_LOG_ERROR, "can not open input file '%s'!\n", [moviePath UTF8String]);
+        return -1;
+	}
+    
     frameWidth = 1280;
     frameHeight = 720;
+    rgb_data = (uint8_t*)lent_malloc(frameHeight * frameWidth * 4);
+    stopRequest = false;
     return 0;
 }
 
@@ -38,13 +60,25 @@
 }
 
 - (int) stop {
-    
+    stopRequest = true;
     return 0;
 }
 
 
 
 typedef unsigned char PEL;
+
+struct VideoFrame
+{
+	int width;
+	int height;
+	int linesize_y;
+	int linesize_uv;
+	double pts;
+	uint8_t **yuv_data;
+};
+
+static VideoFrame frame;
 
 double getms()
 {
@@ -152,7 +186,6 @@ unsigned int AUStart[MAX_AU];
 int findAU(PEL *buffer,int start, int maxlen)
 {
 	int k=start;
-	static int tag=0;
 	while(1){
 		if((buffer[k]==0&&buffer[k+1]==0&&buffer[k+2]==1&&(((buffer[k+3]&0x7F)>>1)<=21)))
 		{
@@ -200,17 +233,65 @@ void outputFrame(PEL *buffer[3], int frame_size, int width, int stride[3], FILE 
 	}
 }
 
+-(void) displayFrame:(struct VideoFrame *) vf {
+    
+    int width = frameWidth;
+    int height = frameHeight;
+    vf = &frame;
+    yuv420_2_rgb8888_neon(rgb_data, vf->yuv_data[0], vf->yuv_data[2], vf->yuv_data[1], width, height, vf->linesize_y, vf->linesize_uv, width * 4);
+    
+
+    
+	CGBitmapInfo bitmapInfo = kCGImageAlphaNoneSkipLast | kCGBitmapByteOrderDefault;
+	CFDataRef data = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault, rgb_data, width * height * 4, kCFAllocatorNull);
+	CGDataProviderRef provider = CGDataProviderCreateWithCFData(data);
+	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+	CGImageRef cgImage = CGImageCreate(width,
+									   height,
+									   8,
+									   32,
+									   width * 4,
+									   colorSpace,
+									   bitmapInfo,
+									   provider,
+									   NULL,
+									   NO,
+									   kCGRenderingIntentDefault);
+	CGColorSpaceRelease(colorSpace);
+	UIImage *image = [UIImage imageWithCGImage:cgImage];
+	CGImageRelease(cgImage);
+	CGDataProviderRelease(provider);
+	CFRelease(data);
+        
+    [self.imageView setImage:image];
+    
+    struct timeval pTime;
+    static int frames = 0;
+    static double t1 = 0;
+    static double t2 = 0;
+    gettimeofday(&pTime, NULL);
+    t2 = pTime.tv_sec + (pTime.tv_usec / 1000000.0);
+    if (t2 > t1 + 1) {
+        [self.infoLabel setText:[NSString stringWithFormat:@"size:%dx%d, fps:%d",width, height, frames]];
+        t1 = t2;
+        frames = 0;
+    }
+    frames++;
+}
+
 
 #define LERP(A,B,C) ((A)*(1.0-C)+(B)*C)
 
 - (void) decodeVideo
 {
+    //[NSThread setThreadPriority:0.6];
+
     
     DecodeCore decoder;
-	long framesGot=0,bytesUsed;
+	long bytesUsed;
 	decoder.Set_Thread(4);
     
-	decoder.StartDecoder(91);
+	decoder.StartDecoder();
     
     
 	PEL *bitstream;
@@ -218,17 +299,15 @@ void outputFrame(PEL *buffer[3], int frame_size, int width, int stride[3], FILE 
 	bitstream=(PEL*)align_malloc(1024*1024*100);
 	memset(bitstream,0,1024*1024*100);
 	FILE *in;
-	in=fopen(media.data_src,"rb");
+	in=fopen([moviePath UTF8String], "rb");
 	if(!in) {
-		lent_log(NULL, LENT_LOG_ERROR, "can not open input file '%s'!\n", media.data_src);
-		return NULL;
+		lent_log(NULL, LENT_LOG_ERROR, "can not open input file '%s'!\n", [moviePath UTF8String]);
 	}
 	remainLen=fread(bitstream,1,1024*1024*100,in);
 	fclose(in);
 	findAUs(bitstream,remainLen);
     
 	lent_log(NULL, LENT_LOG_DEBUG, "input file opened\n");
-    __android_log_print(ANDROID_LOG_INFO, TAG, "input file opened: %s\n", media.data_src);
     
     
 #ifdef OUTPUTYUV
@@ -239,7 +318,6 @@ void outputFrame(PEL *buffer[3], int frame_size, int width, int stride[3], FILE 
     fout = fopen(out_file, "wb");
     if ( NULL == fout ) {
         lent_log(NULL, LENT_LOG_ERROR, "can not create output file '%s'!\n", out_file);
-        __android_log_print(ANDROID_LOG_ERROR, TAG, "can not create output file '%s'!\n", out_file);
         return NULL;
     }
 #endif
@@ -252,22 +330,26 @@ void outputFrame(PEL *buffer[3], int frame_size, int width, int stride[3], FILE 
     
 	while(AUStart[i+1])
 	{
-		__android_log_print(ANDROID_LOG_DEBUG, TAG, "before decode a frame: %.3f *****", getms());
+        if (stopRequest) {
+            break;
+        }
+		lent_log(NULL, LENT_LOG_INFO, "before decode a frame: %.3f *****\n", getms());
 		bytesUsed=AUStart[i+1]-AUStart[i];
 		decoder.DecodeFrame(bitstream+AUStart[i],OutputYUV,&bytesUsed,NULL,&width,stride);
-	    __android_log_print(ANDROID_LOG_INFO, TAG, "DecodeFrame returned\n");
 		if(bytesUsed)
 		{
 			lent_dlog(NULL,"decoded a picture: %d\n",count);
-		    __android_log_print(ANDROID_LOG_INFO, TAG, "decoded a picture: %d\n",count);
-            
+            lent_log(NULL, LENT_LOG_INFO, "after decode this frame: %.3f *****\n", getms());
 			count++;
             
 			// draw frame to screen
-			frame.yuv_data = OutputYUV;
+            frame.yuv_data = OutputYUV;
+            frame.width = frameWidth;
+            frame.height = frameHeight;
 			frame.linesize_y = stride[0];
 			frame.linesize_uv = stride[1];
-			drawFrame(&frame);
+            
+            [self performSelectorOnMainThread:@selector(displayFrame:) withObject:self waitUntilDone:YES];
             
 #ifdef OUTPUTYUV
 			//if(count>100)
@@ -286,39 +368,47 @@ void outputFrame(PEL *buffer[3], int frame_size, int width, int stride[3], FILE 
 				gettimeofday(&pTime, NULL);
 				t2 = pTime.tv_sec + (pTime.tv_usec / 1000000.0);
 				if (t2 > t1 + 1) {
-					if(FPS_DEBUGGING) __android_log_print(ANDROID_LOG_INFO, TAG, "Video Decode FPS:%i", int(frames));
-					postEvent(903, int(frames), 0);
+
 					t1 = t2;
 					frames = 0;
 				}
 				frames++;
 			}
-			__android_log_print(ANDROID_LOG_DEBUG, TAG, "after render this frame: %.3f *****", getms());
+            lent_log(NULL, LENT_LOG_INFO, "after render this frame: %.3f *****\n", getms());
             
 		}
 		else
 		{
-			//printf("decoded no pic!\n");
-		    __android_log_print(ANDROID_LOG_INFO, TAG, "decoded no picture\n");
+			lent_log(NULL, LENT_LOG_INFO, "decoded no pic!\n");
 		}
         
 		if(bytesUsed<0)
 		{
-			//printf("decode error\n");
+			lent_log(NULL, LENT_LOG_INFO, "decode error\n");
 			break;
 		}
 		i++;
-		//if(i>=49)
-		//	break;
 	}
-    
 	do{
+        if (stopRequest) {
+            break;
+        }
 		bytesUsed=0;
 		decoder.DecodeFrame(0,OutputYUV,&bytesUsed,0,&width,stride);
 		if(bytesUsed)
 		{
 			lent_dlog(NULL,"decoded a picture: %d\n",count);
 			count++;
+            
+            // draw frame to screen
+            frame.yuv_data = OutputYUV;
+            frame.width = frameWidth;
+            frame.height = frameHeight;
+			frame.linesize_y = stride[0];
+			frame.linesize_uv = stride[1];
+            
+            [self performSelectorOnMainThread:@selector(displayFrame:) withObject:self waitUntilDone:YES];
+            
 #ifdef OUTPUTYUV
 			//if(count>100)
 			if ( NULL != fout )
@@ -335,91 +425,17 @@ void outputFrame(PEL *buffer[3], int frame_size, int width, int stride[3], FILE 
 		}
 	}while(bytesUsed);
     
-	lent_log(NULL,LENT_LOG_DEBUG,"Decoding time: %d ms\nSpeed: %d FPS.\n",clock()-tStart,count*1000/(clock()-tStart));
+	lent_log(NULL,LENT_LOG_DEBUG,"Decoding time: %lu ms\nSpeed: %lu FPS.\n",clock()-tStart,count*CLOCKS_PER_SEC/(clock()-tStart));
 #ifdef OUTPUTYUV
     if ( NULL != fout )
         fclose(fout);
 #endif
+    
 	align_free(bitstream);
 	//align_free(buffer);
 	//getchar();
 	decoder.UninitDecoder();
-    
-	detachJVM();
-
-    //[NSThread setThreadPriority:0.6];
-    
-    while (1) {
-        
-        {
-            struct timeval pTime;
-            static int frames = 0;
-            static double t1 = 0;
-            static double t2 = 0;
-            gettimeofday(&pTime, NULL);
-            t2 = pTime.tv_sec + (pTime.tv_usec / 1000000.0);
-            if (t2 > t1 + 1) {
-                frameTime = LERP(frameTime, frames, 0.8);
-                t1 = t2;
-                frames = 0;
-            }
-            frames++;
-        }
-        
-        [self performSelectorOnMainThread:@selector(displayFrame:) withObject:self waitUntilDone:YES];
-    }
 }
-
--(UIImage *)displayFrame:(struct VideoFrame *) vf {
-    
-    int width = stateInst.pMovieInst->video.frame_width;
-    int height = stateInst.pMovieInst->video.frame_height;
-    vf = currentVF;
-    AVPicture *pict = vf->picture;
-    //PMSG1("picture: %p, %d\n", pict, pict->linesize[0]);
-    
-	CGBitmapInfo bitmapInfo = kCGImageAlphaNoneSkipLast | kCGBitmapByteOrderDefault;
-	CFDataRef data = CFDataCreateWithBytesNoCopy(kCFAllocatorDefault, pict->data[0], pict->linesize[0] * height, kCFAllocatorDefault);
-	CGDataProviderRef provider = CGDataProviderCreateWithCFData(data);
-	CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
-	CGImageRef cgImage = CGImageCreate(width,
-									   height,
-									   8,
-									   32,
-									   pict->linesize[0],
-									   colorSpace,
-									   bitmapInfo,
-									   provider,
-									   NULL,
-									   NO,
-									   kCGRenderingIntentDefault);
-	CGColorSpaceRelease(colorSpace);
-	UIImage *image = [UIImage imageWithCGImage:cgImage];
-	CGImageRelease(cgImage);
-	CGDataProviderRelease(provider);
-	CFRelease(data);
-    
-	av_free(pict);
-    free(vf);
-    
-    [self.imageView setImage:image];
-    
-    struct timeval pTime;
-    static int frames = 0;
-    static double t1 = 0;
-    static double t2 = 0;
-    gettimeofday(&pTime, NULL);
-    t2 = pTime.tv_sec + (pTime.tv_usec / 1000000.0);
-    if (t2 > t1 + 1) {
-        [self.infoLabel setText:[NSString stringWithFormat:@"size:%dx%d\n display FPS:%d, decode PFS: %d",width, height, frames, (int)frameTime]];
-        t1 = t2;
-        frames = 0;
-    }
-    frames++;
-    
-	return image;
-}
-
 
 
 @end

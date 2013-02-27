@@ -35,17 +35,28 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    if (self.movieList == nil) {
-        self.movieList = [[NSMutableArray alloc] init];
-        NSMutableDictionary *movie = [[NSMutableDictionary alloc] init];
-        [movie setObject:@"filename" forKey:@"Filename"];
-        [movie setObject:@"path" forKey:@"Path"];
-        [self.movieList addObject:movie];
-    }
-
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"Cell"];
     UIBarButtonItem *button = [[UIBarButtonItem alloc] initWithTitle:@"More" style:UIBarButtonItemStyleBordered target:self action:@selector(buttonPressed)];
     self.navigationItem.rightBarButtonItem = button;
+}
+
+- (void) viewWillAppear:(BOOL)animated
+{
+    self.movieList = [[NSMutableArray alloc] init];
+    
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    NSFileManager *manager = [NSFileManager defaultManager];
+    NSArray *fileList = [manager contentsOfDirectoryAtPath:documentsDirectory error:nil];
+    for (NSString *filename in fileList){
+        NSLog(@"%@", filename);
+        NSMutableDictionary *movie = [[NSMutableDictionary alloc] init];
+        [movie setObject:filename forKey:@"Filename"];
+        [movie setObject:[documentsDirectory stringByAppendingString:[@"/" stringByAppendingString:filename]] forKey:@"Path"];
+        [self.movieList addObject:movie];
+    }
+    
+    [self.tableView reloadData];
 }
 
 - (void)didReceiveMemoryWarning
@@ -86,6 +97,10 @@
 {
     if (editingStyle == UITableViewCellEditingStyleDelete) {
         // Delete the row from the data source
+        int index = [indexPath row];
+        NSFileManager *manager = [NSFileManager defaultManager];
+        [manager removeItemAtPath:[[self.movieList objectAtIndex:index] valueForKey:@"Path"] error:nil];
+        [self.movieList removeObjectAtIndex:index];
         [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationFade];
     }   
     else if (editingStyle == UITableViewCellEditingStyleInsert) {
@@ -95,7 +110,7 @@
 
 #pragma mark - Table view delegate
 
-- (void)tableView:(UITableView *)tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
+- (void)tableView:(UITableView *)  tableView didSelectRowAtIndexPath:(NSIndexPath *)indexPath
 {
     NSInteger row = [indexPath row];
     NSDictionary *movie = [self.movieList objectAtIndex:row];
@@ -107,6 +122,8 @@
     
      // Pass the selected object to the new view controller.
      [self.navigationController pushViewController:playViewController animated:YES];
+    
+    [tableView deselectRowAtIndexPath:indexPath animated:NO];
 }
 
 @end

@@ -7,6 +7,15 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		E837B39916DC4CD600559E29 /* SettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E837B39116DC4CD600559E29 /* SettingsViewController.m */; };
+		E837B39A16DC4CD600559E29 /* SettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = E837B39216DC4CD600559E29 /* SettingsViewController.xib */; };
+		E837B39B16DC4CD600559E29 /* TextFieldCell.m in Sources */ = {isa = PBXBuildFile; fileRef = E837B39416DC4CD600559E29 /* TextFieldCell.m */; };
+		E837B39C16DC4CD600559E29 /* TextFieldCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = E837B39516DC4CD600559E29 /* TextFieldCell.xib */; };
+		E837B39D16DC4CD600559E29 /* ToggleSwitchCell.m in Sources */ = {isa = PBXBuildFile; fileRef = E837B39716DC4CD600559E29 /* ToggleSwitchCell.m */; };
+		E837B39E16DC4CD600559E29 /* ToggleSwitchCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = E837B39816DC4CD600559E29 /* ToggleSwitchCell.xib */; };
+		E848E2FB16DDA42A006CB30C /* decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = E848E2F916DDA42A006CB30C /* decoder.cpp */; };
+		E848E2FE16DDA466006CB30C /* liblentoid-dec.a in Frameworks */ = {isa = PBXBuildFile; fileRef = E848E2FD16DDA466006CB30C /* liblentoid-dec.a */; };
+		E848E30016DDA482006CB30C /* yuv2rgb.s in Sources */ = {isa = PBXBuildFile; fileRef = E848E2FF16DDA482006CB30C /* yuv2rgb.s */; };
 		E871CA9B16DAFE1200A6945C /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E871CA9A16DAFE1200A6945C /* UIKit.framework */; };
 		E871CA9D16DAFE1200A6945C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E871CA9C16DAFE1200A6945C /* Foundation.framework */; };
 		E871CA9F16DAFE1200A6945C /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E871CA9E16DAFE1200A6945C /* CoreGraphics.framework */; };
@@ -16,9 +25,26 @@
 		E871CAAD16DAFE1200A6945C /* Default.png in Resources */ = {isa = PBXBuildFile; fileRef = E871CAAC16DAFE1200A6945C /* Default.png */; };
 		E871CAAF16DAFE1200A6945C /* Default@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = E871CAAE16DAFE1200A6945C /* Default@2x.png */; };
 		E871CAB116DAFE1200A6945C /* Default-568h@2x.png in Resources */ = {isa = PBXBuildFile; fileRef = E871CAB016DAFE1200A6945C /* Default-568h@2x.png */; };
+		E871CAC116DAFEED00A6945C /* MoviesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E871CAC016DAFEED00A6945C /* MoviesViewController.m */; };
+		E871CACE16DB0BCE00A6945C /* PlayViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = E871CACC16DB0BCE00A6945C /* PlayViewController.m */; };
+		E871CACF16DB0BCE00A6945C /* PlayViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = E871CACD16DB0BCE00A6945C /* PlayViewController.xib */; };
+		E871CAD216DB0D9A00A6945C /* MoviePlayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = E871CAD116DB0D9A00A6945C /* MoviePlayer.mm */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		E837B39016DC4CD600559E29 /* SettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SettingsViewController.h; sourceTree = "<group>"; };
+		E837B39116DC4CD600559E29 /* SettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SettingsViewController.m; sourceTree = "<group>"; };
+		E837B39216DC4CD600559E29 /* SettingsViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SettingsViewController.xib; sourceTree = "<group>"; };
+		E837B39316DC4CD600559E29 /* TextFieldCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextFieldCell.h; sourceTree = "<group>"; };
+		E837B39416DC4CD600559E29 /* TextFieldCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TextFieldCell.m; sourceTree = "<group>"; };
+		E837B39516DC4CD600559E29 /* TextFieldCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = TextFieldCell.xib; sourceTree = "<group>"; };
+		E837B39616DC4CD600559E29 /* ToggleSwitchCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToggleSwitchCell.h; sourceTree = "<group>"; };
+		E837B39716DC4CD600559E29 /* ToggleSwitchCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToggleSwitchCell.m; sourceTree = "<group>"; };
+		E837B39816DC4CD600559E29 /* ToggleSwitchCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ToggleSwitchCell.xib; sourceTree = "<group>"; };
+		E848E2F916DDA42A006CB30C /* decoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = decoder.cpp; path = "lentoid-dec/interface/decoder.cpp"; sourceTree = "<group>"; };
+		E848E2FA16DDA42A006CB30C /* decoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = decoder.h; path = "lentoid-dec/interface/decoder.h"; sourceTree = "<group>"; };
+		E848E2FD16DDA466006CB30C /* liblentoid-dec.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = "liblentoid-dec.a"; path = "lentoid-dec/liblentoid-dec.a"; sourceTree = "<group>"; };
+		E848E2FF16DDA482006CB30C /* yuv2rgb.s */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.asm; path = yuv2rgb.s; sourceTree = "<group>"; };
 		E871CA9616DAFE1200A6945C /* HEVPlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HEVPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E871CA9A16DAFE1200A6945C /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		E871CA9C16DAFE1200A6945C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -32,6 +58,13 @@
 		E871CAAC16DAFE1200A6945C /* Default.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = Default.png; sourceTree = "<group>"; };
 		E871CAAE16DAFE1200A6945C /* Default@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default@2x.png"; sourceTree = "<group>"; };
 		E871CAB016DAFE1200A6945C /* Default-568h@2x.png */ = {isa = PBXFileReference; lastKnownFileType = image.png; path = "Default-568h@2x.png"; sourceTree = "<group>"; };
+		E871CABF16DAFEED00A6945C /* MoviesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MoviesViewController.h; sourceTree = "<group>"; };
+		E871CAC016DAFEED00A6945C /* MoviesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MoviesViewController.m; sourceTree = "<group>"; };
+		E871CACB16DB0BCE00A6945C /* PlayViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlayViewController.h; sourceTree = "<group>"; };
+		E871CACC16DB0BCE00A6945C /* PlayViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = PlayViewController.m; sourceTree = "<group>"; };
+		E871CACD16DB0BCE00A6945C /* PlayViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = PlayViewController.xib; sourceTree = "<group>"; };
+		E871CAD016DB0D9A00A6945C /* MoviePlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MoviePlayer.h; sourceTree = "<group>"; };
+		E871CAD116DB0D9A00A6945C /* MoviePlayer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = MoviePlayer.mm; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -39,6 +72,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E848E2FE16DDA466006CB30C /* liblentoid-dec.a in Frameworks */,
 				E871CA9B16DAFE1200A6945C /* UIKit.framework in Frameworks */,
 				E871CA9D16DAFE1200A6945C /* Foundation.framework in Frameworks */,
 				E871CA9F16DAFE1200A6945C /* CoreGraphics.framework in Frameworks */,
@@ -48,9 +82,20 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		E848E2FC16DDA431006CB30C /* Lentoid-dec */ = {
+			isa = PBXGroup;
+			children = (
+				E848E2FD16DDA466006CB30C /* liblentoid-dec.a */,
+				E848E2F916DDA42A006CB30C /* decoder.cpp */,
+				E848E2FA16DDA42A006CB30C /* decoder.h */,
+			);
+			name = "Lentoid-dec";
+			sourceTree = "<group>";
+		};
 		E871CA8B16DAFE1200A6945C = {
 			isa = PBXGroup;
 			children = (
+				E848E2FC16DDA431006CB30C /* Lentoid-dec */,
 				E871CAA016DAFE1200A6945C /* HEVPlayer */,
 				E871CA9916DAFE1200A6945C /* Frameworks */,
 				E871CA9716DAFE1200A6945C /* Products */,
@@ -78,9 +123,26 @@
 		E871CAA016DAFE1200A6945C /* HEVPlayer */ = {
 			isa = PBXGroup;
 			children = (
+				E848E2FF16DDA482006CB30C /* yuv2rgb.s */,
+				E837B39016DC4CD600559E29 /* SettingsViewController.h */,
+				E837B39116DC4CD600559E29 /* SettingsViewController.m */,
+				E837B39216DC4CD600559E29 /* SettingsViewController.xib */,
+				E837B39316DC4CD600559E29 /* TextFieldCell.h */,
+				E837B39416DC4CD600559E29 /* TextFieldCell.m */,
+				E837B39516DC4CD600559E29 /* TextFieldCell.xib */,
+				E837B39616DC4CD600559E29 /* ToggleSwitchCell.h */,
+				E837B39716DC4CD600559E29 /* ToggleSwitchCell.m */,
+				E837B39816DC4CD600559E29 /* ToggleSwitchCell.xib */,
+				E871CABF16DAFEED00A6945C /* MoviesViewController.h */,
+				E871CAC016DAFEED00A6945C /* MoviesViewController.m */,
 				E871CAA916DAFE1200A6945C /* HEVPlayerAppDelegate.h */,
 				E871CAAA16DAFE1200A6945C /* HEVPlayerAppDelegate.m */,
 				E871CAA116DAFE1200A6945C /* Supporting Files */,
+				E871CACB16DB0BCE00A6945C /* PlayViewController.h */,
+				E871CACC16DB0BCE00A6945C /* PlayViewController.m */,
+				E871CACD16DB0BCE00A6945C /* PlayViewController.xib */,
+				E871CAD016DB0D9A00A6945C /* MoviePlayer.h */,
+				E871CAD116DB0D9A00A6945C /* MoviePlayer.mm */,
 			);
 			path = HEVPlayer;
 			sourceTree = "<group>";
@@ -155,6 +217,10 @@
 				E871CAAD16DAFE1200A6945C /* Default.png in Resources */,
 				E871CAAF16DAFE1200A6945C /* Default@2x.png in Resources */,
 				E871CAB116DAFE1200A6945C /* Default-568h@2x.png in Resources */,
+				E871CACF16DB0BCE00A6945C /* PlayViewController.xib in Resources */,
+				E837B39A16DC4CD600559E29 /* SettingsViewController.xib in Resources */,
+				E837B39C16DC4CD600559E29 /* TextFieldCell.xib in Resources */,
+				E837B39E16DC4CD600559E29 /* ToggleSwitchCell.xib in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -167,6 +233,14 @@
 			files = (
 				E871CAA716DAFE1200A6945C /* main.m in Sources */,
 				E871CAAB16DAFE1200A6945C /* HEVPlayerAppDelegate.m in Sources */,
+				E871CAC116DAFEED00A6945C /* MoviesViewController.m in Sources */,
+				E871CACE16DB0BCE00A6945C /* PlayViewController.m in Sources */,
+				E871CAD216DB0D9A00A6945C /* MoviePlayer.mm in Sources */,
+				E837B39916DC4CD600559E29 /* SettingsViewController.m in Sources */,
+				E837B39B16DC4CD600559E29 /* TextFieldCell.m in Sources */,
+				E837B39D16DC4CD600559E29 /* ToggleSwitchCell.m in Sources */,
+				E848E2FB16DDA42A006CB30C /* decoder.cpp in Sources */,
+				E848E30016DDA482006CB30C /* yuv2rgb.s in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -240,8 +314,17 @@
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "HEVPlayer/HEVPlayer-Prefix.pch";
+				"HEADER_SEARCH_PATHS[arch=*]" = "$(SRCROOT)/lentoid-dec";
 				INFOPLIST_FILE = "HEVPlayer/HEVPlayer-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/lentoid-dec\"",
+				);
+				OTHER_CFLAGS = "";
+				"OTHER_CFLAGS[arch=*]" = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALID_ARCHS = armv7;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -251,8 +334,15 @@
 			buildSettings = {
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "HEVPlayer/HEVPlayer-Prefix.pch";
+				"HEADER_SEARCH_PATHS[arch=*]" = "$(SRCROOT)/lentoid-dec";
 				INFOPLIST_FILE = "HEVPlayer/HEVPlayer-Info.plist";
+				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"\"$(SRCROOT)/lentoid-dec\"",
+				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALID_ARCHS = armv7;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
@@ -276,6 +366,7 @@
 				E871CAB616DAFE1200A6945C /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
