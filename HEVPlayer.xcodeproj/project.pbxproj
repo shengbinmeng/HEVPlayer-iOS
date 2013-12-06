@@ -118,9 +118,23 @@
 			path = GLRenderView;
 			sourceTree = "<group>";
 		};
+		6C9A4DAA1851F8F70015FB0B /* Prebuilt */ = {
+			isa = PBXGroup;
+			children = (
+				6C9A4DA61851F4FA0015FB0B /* liblenthevcdec.a */,
+				6C9A4D9A1851F4440015FB0B /* libavcodec.a */,
+				6C9A4D9B1851F4440015FB0B /* libavformat.a */,
+				6C9A4D9C1851F4440015FB0B /* libavutil.a */,
+				6C9A4D9D1851F4440015FB0B /* libswresample.a */,
+				6C9A4D9E1851F4440015FB0B /* libswscale.a */,
+			);
+			name = Prebuilt;
+			sourceTree = "<group>";
+		};
 		E871CA8B16DAFE1200A6945C = {
 			isa = PBXGroup;
 			children = (
+				6C9A4DAA1851F8F70015FB0B /* Prebuilt */,
 				6C9A4D8F1851F29E0015FB0B /* GLRenderView */,
 				E871CAA016DAFE1200A6945C /* HEVPlayer */,
 				E871CA9916DAFE1200A6945C /* Frameworks */,
@@ -139,13 +153,7 @@
 		E871CA9916DAFE1200A6945C /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
-				6C9A4DA61851F4FA0015FB0B /* liblenthevcdec.a */,
 				6C9A4DA41851F4640015FB0B /* libiconv.dylib */,
-				6C9A4D9A1851F4440015FB0B /* libavcodec.a */,
-				6C9A4D9B1851F4440015FB0B /* libavformat.a */,
-				6C9A4D9C1851F4440015FB0B /* libavutil.a */,
-				6C9A4D9D1851F4440015FB0B /* libswresample.a */,
-				6C9A4D9E1851F4440015FB0B /* libswscale.a */,
 				6C9A4D981851F4270015FB0B /* OpenGLES.framework */,
 				6C9A4D961851F4140015FB0B /* QuartzCore.framework */,
 				E871CA9A16DAFE1200A6945C /* UIKit.framework */,
@@ -160,23 +168,23 @@
 			children = (
 				6C9A4D781851F20B0015FB0B /* HEVPlayerAppDelegate.h */,
 				6C9A4D791851F20B0015FB0B /* HEVPlayerAppDelegate.m */,
+				E871CAD016DB0D9A00A6945C /* MoviePlayer.h */,
 				6C9A4D7A1851F20B0015FB0B /* MoviePlayer.m */,
 				6C9A4D7B1851F20B0015FB0B /* MoviesViewController.h */,
 				6C9A4D7C1851F20B0015FB0B /* MoviesViewController.m */,
+				E871CACB16DB0BCE00A6945C /* PlayViewController.h */,
+				E871CACC16DB0BCE00A6945C /* PlayViewController.m */,
+				E871CACD16DB0BCE00A6945C /* PlayViewController.xib */,
 				6C9A4D7D1851F20B0015FB0B /* SettingsViewController.h */,
 				6C9A4D7E1851F20B0015FB0B /* SettingsViewController.m */,
 				6C9A4D7F1851F20B0015FB0B /* SettingsViewController.xib */,
+				E871CAA116DAFE1200A6945C /* Supporting Files */,
 				6C9A4D801851F20B0015FB0B /* TextFieldCell.h */,
 				6C9A4D811851F20B0015FB0B /* TextFieldCell.m */,
 				6C9A4D821851F20B0015FB0B /* TextFieldCell.xib */,
 				6C9A4D831851F20B0015FB0B /* ToggleSwitchCell.h */,
 				6C9A4D841851F20B0015FB0B /* ToggleSwitchCell.m */,
 				6C9A4D851851F20B0015FB0B /* ToggleSwitchCell.xib */,
-				E871CAA116DAFE1200A6945C /* Supporting Files */,
-				E871CACB16DB0BCE00A6945C /* PlayViewController.h */,
-				E871CACC16DB0BCE00A6945C /* PlayViewController.m */,
-				E871CACD16DB0BCE00A6945C /* PlayViewController.xib */,
-				E871CAD016DB0D9A00A6945C /* MoviePlayer.h */,
 			);
 			path = HEVPlayer;
 			sourceTree = "<group>";
