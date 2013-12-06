@@ -131,11 +131,22 @@
 			name = Prebuilt;
 			sourceTree = "<group>";
 		};
+		6C9A4DAB1851F9720015FB0B /* MoviePlayer */ = {
+			isa = PBXGroup;
+			children = (
+				E871CAD016DB0D9A00A6945C /* MoviePlayer.h */,
+				6C9A4D7A1851F20B0015FB0B /* MoviePlayer.m */,
+			);
+			name = MoviePlayer;
+			path = HEVPlayer;
+			sourceTree = "<group>";
+		};
 		E871CA8B16DAFE1200A6945C = {
 			isa = PBXGroup;
 			children = (
 				6C9A4DAA1851F8F70015FB0B /* Prebuilt */,
 				6C9A4D8F1851F29E0015FB0B /* GLRenderView */,
+				6C9A4DAB1851F9720015FB0B /* MoviePlayer */,
 				E871CAA016DAFE1200A6945C /* HEVPlayer */,
 				E871CA9916DAFE1200A6945C /* Frameworks */,
 				E871CA9716DAFE1200A6945C /* Products */,
@@ -168,8 +179,6 @@
 			children = (
 				6C9A4D781851F20B0015FB0B /* HEVPlayerAppDelegate.h */,
 				6C9A4D791851F20B0015FB0B /* HEVPlayerAppDelegate.m */,
-				E871CAD016DB0D9A00A6945C /* MoviePlayer.h */,
-				6C9A4D7A1851F20B0015FB0B /* MoviePlayer.m */,
 				6C9A4D7B1851F20B0015FB0B /* MoviesViewController.h */,
 				6C9A4D7C1851F20B0015FB0B /* MoviesViewController.m */,
 				E871CACB16DB0BCE00A6945C /* PlayViewController.h */,
