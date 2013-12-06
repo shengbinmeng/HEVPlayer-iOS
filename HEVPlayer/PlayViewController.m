@@ -3,16 +3,17 @@
 //  HEVPlayer
 //
 //  Created by Shengbin Meng on 13-2-25.
-//  Copyright (c) 2013年 Peking University. All rights reserved.
+//  Copyright (c) 2013 Peking University. All rights reserved.
 //
 
 #import "PlayViewController.h"
-
-@interface PlayViewController ()
-
-@end
+#import "GLView.h"
 
 @implementation PlayViewController
+
+{
+    bool isPlaying;
+}
 
 - (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
 {
@@ -23,13 +24,25 @@
     return self;
 }
 
+- (void) monitorPlaybackTime
+{
+    if (!isPlaying) {
+        return;
+    }
+
+    [self.infoLabel setText:self.player.infoString];
+    [self performSelector:@selector(monitorPlaybackTime) withObject:nil afterDelay:1.0];
+}
+
 - (void)viewDidLoad
 {
     [super viewDidLoad];
+    
     // Do any additional setup after loading the view from its nib.
     if (self.player == nil) {
         self.player = [[MoviePlayer alloc] init];
     }
+    
     NSString * path = [[NSUserDefaults standardUserDefaults] valueForKey:@"videoPath"];
     int ret = [self.player openMovie:path];
     if(ret != 0) {
@@ -37,9 +50,18 @@
         [alert show];
         return ;
     } else {
-        [self.player setOutputViews:self.imageView:self.infoLabel];
-        [self.player play];
-    }    
+        self.player.renderer = ((GLView*)self.view).renderer;
+        [self.player setOutputViews:nil:self.infoLabel];
+
+        int ret = [self.player play];
+        if(ret != 0) {
+            UIAlertView * alert = [[UIAlertView alloc] initWithTitle:@"Message" message:@"Can't play this movie! Please check its format." delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+            [alert show];
+            return ;
+        }
+        isPlaying = YES;
+        [self monitorPlaybackTime];
+    }
 }
 
 - (void) viewWillAppear:(BOOL)animated
@@ -60,8 +82,28 @@
     // Dispose of any resources that can be recreated.
 }
 
-- (IBAction)doneButtonPressed:(id)sender {
+- (NSUInteger)supportedInterfaceOrientations
+{
+    return UIInterfaceOrientationMaskLandscapeRight;
+}
+
+-(BOOL)shouldAutorotate
+{
+    return YES;
+}
+
+- (UIInterfaceOrientation)preferredInterfaceOrientationForPresentation
+{
+    return UIInterfaceOrientationLandscapeRight;
+}
+
+
+- (IBAction)doneButtonPressed:(id)sender
+{
+    isPlaying = NO;
     [self.player stop];
+    [[UIApplication sharedApplication] setIdleTimerDisabled:NO];
     [self.navigationController popViewControllerAnimated:YES];
 }
+
 @end

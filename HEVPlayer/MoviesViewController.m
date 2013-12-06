@@ -3,7 +3,7 @@
 //  HEVPlayer
 //
 //  Created by Shengbin Meng on 13-2-25.
-//  Copyright (c) 2013年 Peking University. All rights reserved.
+//  Copyright (c) 2013 Peking University. All rights reserved.
 //
 
 #import "MoviesViewController.h"
@@ -35,7 +35,11 @@
 - (void)viewDidLoad
 {
     [super viewDidLoad];
-    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"Cell"];
+    
+    if ([self.tableView respondsToSelector:@selector(registerClass:forCellReuseIdentifier:)]) {
+        // this is iOS 6.0 above
+        [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"Cell"];
+    }
     UIBarButtonItem *button = [[UIBarButtonItem alloc] initWithTitle:@"More" style:UIBarButtonItemStyleBordered target:self action:@selector(buttonPressed)];
     self.navigationItem.rightBarButtonItem = button;
 }
@@ -49,7 +53,6 @@
     NSFileManager *manager = [NSFileManager defaultManager];
     NSArray *fileList = [manager contentsOfDirectoryAtPath:documentsDirectory error:nil];
     for (NSString *filename in fileList){
-        NSLog(@"%@", filename);
         NSMutableDictionary *movie = [[NSMutableDictionary alloc] init];
         [movie setObject:filename forKey:@"Filename"];
         [movie setObject:[documentsDirectory stringByAppendingString:[@"/" stringByAppendingString:filename]] forKey:@"Path"];
@@ -82,7 +85,17 @@
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath
 {
     static NSString *CellIdentifier = @"Cell";
-    UITableViewCell *cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
+    UITableViewCell *cell;
+    if ([tableView respondsToSelector:@selector(dequeueReusableCellWithIdentifier:forIndexPath:)]) {
+        cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier forIndexPath:indexPath];
+    } else {
+        cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
+        if (cell == nil) {
+            cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:CellIdentifier];
+        }
+
+    }
+
     
     // Configure the cell...
     NSUInteger row = [indexPath row];
@@ -114,13 +127,10 @@
 {
     NSInteger row = [indexPath row];
     NSDictionary *movie = [self.movieList objectAtIndex:row];
-    
     [[NSUserDefaults standardUserDefaults] setValue:[movie objectForKey:@"Path"] forKey:@"videoPath"];
+    
     // Navigation logic may go here. Create and push another view controller.
      PlayViewController *playViewController = [[PlayViewController alloc] initWithNibName:@"PlayViewController" bundle:nil];
-     // ...
-    
-     // Pass the selected object to the new view controller.
      [self.navigationController pushViewController:playViewController animated:YES];
     
     [tableView deselectRowAtIndexPath:indexPath animated:NO];

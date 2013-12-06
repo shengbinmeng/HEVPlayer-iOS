@@ -3,7 +3,7 @@
 //  HEVPlayer
 //
 //  Created by Shengbin Meng on 13-2-25.
-//  Copyright (c) 2013年 Peking University. All rights reserved.
+//  Copyright (c) 2013 Peking University. All rights reserved.
 //
 
 #import "HEVPlayerAppDelegate.h"
@@ -19,6 +19,14 @@
     UINavigationController *nav = [[UINavigationController alloc] initWithRootViewController:vc];
     self.window.rootViewController = nav;
     [self.window makeKeyAndVisible];
+    
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"threadNum"] == nil) {
+        [[NSUserDefaults standardUserDefaults] setValue:@"0 (auto)" forKey:@"threadNum"];
+    }
+    if ([[NSUserDefaults standardUserDefaults] objectForKey:@"renderFPS"] == nil) {
+        [[NSUserDefaults standardUserDefaults] setValue:@"0 (full speed)" forKey:@"renderFPS"];
+    }
+    
     return YES;
 }
 
