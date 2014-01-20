@@ -27,6 +27,7 @@
 		6C9A4DA31851F4440015FB0B /* libswscale.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9A4D9E1851F4440015FB0B /* libswscale.a */; };
 		6C9A4DA51851F4640015FB0B /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9A4DA41851F4640015FB0B /* libiconv.dylib */; };
 		6C9A4DA71851F4FA0015FB0B /* liblenthevcdec.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9A4DA61851F4FA0015FB0B /* liblenthevcdec.a */; };
+		6C9A4DB11851FA430015FB0B /* FrameQueue.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C9A4DAF1851FA430015FB0B /* FrameQueue.m */; };
 		E871CA9B16DAFE1200A6945C /* UIKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E871CA9A16DAFE1200A6945C /* UIKit.framework */; };
 		E871CA9D16DAFE1200A6945C /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E871CA9C16DAFE1200A6945C /* Foundation.framework */; };
 		E871CA9F16DAFE1200A6945C /* CoreGraphics.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = E871CA9E16DAFE1200A6945C /* CoreGraphics.framework */; };
@@ -67,6 +68,8 @@
 		6C9A4D9E1851F4440015FB0B /* libswscale.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libswscale.a; path = "ffmpeg-2.0/lib/libswscale.a"; sourceTree = "<group>"; };
 		6C9A4DA41851F4640015FB0B /* libiconv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.dylib; path = usr/lib/libiconv.dylib; sourceTree = SDKROOT; };
 		6C9A4DA61851F4FA0015FB0B /* liblenthevcdec.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblenthevcdec.a; path = lenthevcdec/lib/liblenthevcdec.a; sourceTree = "<group>"; };
+		6C9A4DAE1851FA430015FB0B /* FrameQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FrameQueue.h; sourceTree = "<group>"; };
+		6C9A4DAF1851FA430015FB0B /* FrameQueue.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = FrameQueue.m; sourceTree = "<group>"; };
 		E871CA9616DAFE1200A6945C /* HEVPlayer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = HEVPlayer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E871CA9A16DAFE1200A6945C /* UIKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = UIKit.framework; path = System/Library/Frameworks/UIKit.framework; sourceTree = SDKROOT; };
 		E871CA9C16DAFE1200A6945C /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
@@ -134,6 +137,8 @@
 		6C9A4DAB1851F9720015FB0B /* MoviePlayer */ = {
 			isa = PBXGroup;
 			children = (
+				6C9A4DAE1851FA430015FB0B /* FrameQueue.h */,
+				6C9A4DAF1851FA430015FB0B /* FrameQueue.m */,
 				E871CAD016DB0D9A00A6945C /* MoviePlayer.h */,
 				6C9A4D7A1851F20B0015FB0B /* MoviePlayer.m */,
 			);
@@ -285,6 +290,7 @@
 				6C9A4D941851F29E0015FB0B /* GLRenderer.m in Sources */,
 				E871CAA716DAFE1200A6945C /* main.m in Sources */,
 				6C9A4D861851F20B0015FB0B /* HEVPlayerAppDelegate.m in Sources */,
+				6C9A4DB11851FA430015FB0B /* FrameQueue.m in Sources */,
 				E871CACE16DB0BCE00A6945C /* PlayViewController.m in Sources */,
 				6C9A4D8B1851F20B0015FB0B /* TextFieldCell.m in Sources */,
 				6C9A4D881851F20B0015FB0B /* MoviesViewController.m in Sources */,
@@ -381,7 +387,7 @@
 				OTHER_CFLAGS = "";
 				"OTHER_CFLAGS[arch=*]" = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				VALID_ARCHS = "armv7 armv7s";
+				VALID_ARCHS = armv7;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Debug;
@@ -405,7 +411,7 @@
 					/Users/shengbin/projects/HEVPlayer/lenthevcdec/lib,
 				);
 				PRODUCT_NAME = "$(TARGET_NAME)";
-				VALID_ARCHS = "armv7 armv7s";
+				VALID_ARCHS = armv7;
 				WRAPPER_EXTENSION = app;
 			};
 			name = Release;
