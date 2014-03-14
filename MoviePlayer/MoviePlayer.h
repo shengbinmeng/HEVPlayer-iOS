@@ -10,18 +10,6 @@
 #import "GLRenderer.h"
 #import "GLView.h"
 
-#include "libavformat/avformat.h"
-
-struct VideoFrame
-{
-	int width;
-	int height;
-	int linesize_y;
-	int linesize_uv;
-	double pts;
-	uint8_t *yuv_data[3];
-};
-
 uint32_t getms();
 
 @interface MoviePlayer : NSObject <RenderStateListener>
@@ -33,10 +21,17 @@ uint32_t getms();
 
 - (void) setOutputViews:(UIImageView*)imageView :(UILabel*)infoLabel;
 
-- (int) openMovie:(NSString*) path;
-
-- (int) play;
-
+- (int) open:(NSString*) path;
+- (int) start;
+- (int) go;
+- (int) pause;
 - (int) stop;
+- (int) close;
+
+- (double) getMovieTimeInSeconds;
+- (double) getMovieDurationInSeconds;
+- (int) seekTo:(int64_t) timeInSeconds;
+- (BOOL) movieIsPlaying;
+
 
 @end

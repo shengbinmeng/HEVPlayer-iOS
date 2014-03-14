@@ -7,7 +7,9 @@
 //
 
 #import "GLRenderer.h"
-#import "MoviePlayer.h"
+#include "mp_listener.h"
+
+extern struct VideoFrame* gVF;
 
 #define ENABLE_LOGD 0
 #if ENABLE_LOGD

@@ -44,7 +44,7 @@
     }
     
     NSString * path = [[NSUserDefaults standardUserDefaults] valueForKey:@"videoPath"];
-    int ret = [self.player openMovie:path];
+    int ret = [self.player open:path];
     if(ret != 0) {
         UIAlertView * alert = [[UIAlertView alloc] initWithTitle:@"Message" message:@"Get movie data failed! Please check your source or try again." delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
         [alert show];
@@ -53,7 +53,7 @@
         self.player.renderer = ((GLView*)self.view).renderer;
         [self.player setOutputViews:nil:self.infoLabel];
 
-        int ret = [self.player play];
+        int ret = [self.player start];
         if(ret != 0) {
             UIAlertView * alert = [[UIAlertView alloc] initWithTitle:@"Message" message:@"Can't play this movie! Please check its format." delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
             [alert show];
