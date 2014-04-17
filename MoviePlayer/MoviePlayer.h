@@ -12,7 +12,7 @@
 
 uint32_t getms();
 
-@interface MoviePlayer : NSObject <RenderStateListener>
+@interface MoviePlayer : NSObject
 
 @property (retain) UIImageView *imageView;
 @property (retain) UILabel *infoLabel;

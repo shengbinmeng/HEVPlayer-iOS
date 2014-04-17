@@ -9,6 +9,8 @@
 #import "PlayViewController.h"
 #import "GLView.h"
 
+GLRenderer *gRenderer;
+
 @implementation PlayViewController
 
 {
@@ -51,6 +53,7 @@
         return ;
     } else {
         self.player.renderer = ((GLView*)self.view).renderer;
+        gRenderer = self.player.renderer;
         [self.player setOutputViews:nil:self.infoLabel];
 
         int ret = [self.player start];
@@ -102,6 +105,7 @@
 {
     isPlaying = NO;
     [self.player stop];
+    [self.player close];
     [[UIApplication sharedApplication] setIdleTimerDisabled:NO];
     [self.navigationController popViewControllerAnimated:YES];
 }

@@ -31,7 +31,7 @@
 		6CE3B05018D2D6A200C65F26 /* packetqueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B04518D2D6A200C65F26 /* packetqueue.cpp */; };
 		6CE3B05118D2D6A200C65F26 /* thread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B04818D2D6A200C65F26 /* thread.cpp */; };
 		6CE3B05218D2D6A200C65F26 /* video_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B04A18D2D6A200C65F26 /* video_decoder.cpp */; };
-		6CE3B05518D2D7AD00C65F26 /* mp_listener.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B05318D2D7AD00C65F26 /* mp_listener.cpp */; };
+		6CE3B05518D2D7AD00C65F26 /* mp_listener.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B05318D2D7AD00C65F26 /* mp_listener.mm */; };
 		6CE3B06918D2DD2B00C65F26 /* GLRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B06418D2DD2B00C65F26 /* GLRenderer.mm */; };
 		6CE3B06A18D2DD2B00C65F26 /* GLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B06618D2DD2B00C65F26 /* GLView.m */; };
 		6CE3B06B18D2DD2B00C65F26 /* MoviePlayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B06818D2DD2B00C65F26 /* MoviePlayer.mm */; };
@@ -85,7 +85,7 @@
 		6CE3B04918D2D6A200C65F26 /* thread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = thread.h; sourceTree = "<group>"; };
 		6CE3B04A18D2D6A200C65F26 /* video_decoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = video_decoder.cpp; sourceTree = "<group>"; };
 		6CE3B04B18D2D6A200C65F26 /* video_decoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = video_decoder.h; sourceTree = "<group>"; };
-		6CE3B05318D2D7AD00C65F26 /* mp_listener.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mp_listener.cpp; sourceTree = "<group>"; };
+		6CE3B05318D2D7AD00C65F26 /* mp_listener.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = mp_listener.mm; sourceTree = "<group>"; };
 		6CE3B05418D2D7AD00C65F26 /* mp_listener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mp_listener.h; sourceTree = "<group>"; };
 		6CE3B06318D2DD2B00C65F26 /* GLRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLRenderer.h; sourceTree = "<group>"; };
 		6CE3B06418D2DD2B00C65F26 /* GLRenderer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = GLRenderer.mm; sourceTree = "<group>"; };
@@ -148,7 +148,7 @@
 		6CE3B03C18D2D6A200C65F26 /* mediaplayer */ = {
 			isa = PBXGroup;
 			children = (
-				6CE3B05318D2D7AD00C65F26 /* mp_listener.cpp */,
+				6CE3B05318D2D7AD00C65F26 /* mp_listener.mm */,
 				6CE3B05418D2D7AD00C65F26 /* mp_listener.h */,
 				6CE3B03D18D2D6A200C65F26 /* audio_decoder.cpp */,
 				6CE3B03E18D2D6A200C65F26 /* audio_decoder.h */,
@@ -325,7 +325,7 @@
 			files = (
 				6CE3B05218D2D6A200C65F26 /* video_decoder.cpp in Sources */,
 				6CE3B06A18D2DD2B00C65F26 /* GLView.m in Sources */,
-				6CE3B05518D2D7AD00C65F26 /* mp_listener.cpp in Sources */,
+				6CE3B05518D2D7AD00C65F26 /* mp_listener.mm in Sources */,
 				E871CAA716DAFE1200A6945C /* main.m in Sources */,
 				6CE3B04D18D2D6A200C65F26 /* decoder.cpp in Sources */,
 				6CE3B05118D2D6A200C65F26 /* thread.cpp in Sources */,

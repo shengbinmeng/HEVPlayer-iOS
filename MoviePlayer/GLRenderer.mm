@@ -145,9 +145,7 @@ static GLfloat textureCoords[] = {
     GLuint gUniformTexY;
     GLuint gUniformTexU;
     GLuint gUniformTexV;
-    
-    id<RenderStateListener> listener;
-    
+        
     int needSetup;
 }
 
@@ -217,11 +215,6 @@ static GLfloat textureCoords[] = {
     needSetup = 0;
     
     return self;
-}
-
-- (void) setRenderStateListener:(id<RenderStateListener>) lis
-{
-    listener = lis;
 }
 
 - (int) resizeFromLayer:(CAEAGLLayer *)layer
@@ -297,9 +290,7 @@ static GLfloat textureCoords[] = {
 	glTexImage2D ( GL_TEXTURE_2D, 0, GL_LUMINANCE, gVF->linesize_uv, gVF->height/2, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, gVF->yuv_data[1]);
 	glActiveTexture(GL_TEXTURE0 + 2);
 	glTexImage2D ( GL_TEXTURE_2D, 0, GL_LUMINANCE, gVF->linesize_uv, gVF->height/2, 0, GL_LUMINANCE, GL_UNSIGNED_BYTE, gVF->yuv_data[2]);
-    
-    [listener bufferDone];
-    
+        
     LOGD("after upload: %u (%f) \n", getms(), gVF->pts);
     
 	glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
@@ -307,6 +298,12 @@ static GLfloat textureCoords[] = {
     LOGD("after glDrawArrays: %u (%f) \n", getms(), gVF->pts);
     
     [context presentRenderbuffer:GL_RENDERBUFFER];
+    
+    if (gVF != NULL) {
+		free(gVF->yuv_data[0]);
+		free(gVF);
+		gVF = NULL;
+    }
     
 }
 

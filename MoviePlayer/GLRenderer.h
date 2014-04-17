@@ -8,13 +8,7 @@
 
 #import <Foundation/Foundation.h>
 
-@protocol RenderStateListener
-- (void) bufferDone;
-@end
-
 @interface GLRenderer : NSObject
-
-- (void) setRenderStateListener:(id<RenderStateListener>) lis;
 
 - (int) resizeFromLayer:(CAEAGLLayer *)layer;
 
