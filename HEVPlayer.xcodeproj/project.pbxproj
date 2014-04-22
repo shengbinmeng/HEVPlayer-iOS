@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		6C0F2EA71906143100EA70F3 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6C0F2EA61906143100EA70F3 /* Images.xcassets */; };
 		6C9A4D861851F20B0015FB0B /* HEVPlayerAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C9A4D791851F20B0015FB0B /* HEVPlayerAppDelegate.m */; };
 		6C9A4D881851F20B0015FB0B /* MoviesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C9A4D7C1851F20B0015FB0B /* MoviesViewController.m */; };
 		6C9A4D891851F20B0015FB0B /* SettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C9A4D7E1851F20B0015FB0B /* SettingsViewController.m */; };
@@ -48,6 +49,7 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		6C0F2EA61906143100EA70F3 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
 		6C9A4D781851F20B0015FB0B /* HEVPlayerAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HEVPlayerAppDelegate.h; sourceTree = "<group>"; };
 		6C9A4D791851F20B0015FB0B /* HEVPlayerAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HEVPlayerAppDelegate.m; sourceTree = "<group>"; };
 		6C9A4D7B1851F20B0015FB0B /* MoviesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MoviesViewController.h; sourceTree = "<group>"; };
@@ -235,6 +237,7 @@
 				6C9A4D831851F20B0015FB0B /* ToggleSwitchCell.h */,
 				6C9A4D841851F20B0015FB0B /* ToggleSwitchCell.m */,
 				6C9A4D851851F20B0015FB0B /* ToggleSwitchCell.xib */,
+				6C0F2EA61906143100EA70F3 /* Images.xcassets */,
 			);
 			path = HEVPlayer;
 			sourceTree = "<group>";
@@ -282,6 +285,11 @@
 				CLASSPREFIX = HEVPlayer;
 				LastUpgradeCheck = 0450;
 				ORGANIZATIONNAME = "Peking University";
+				TargetAttributes = {
+					E871CA9516DAFE1200A6945C = {
+						DevelopmentTeam = RAE237RSGC;
+					};
+				};
 			};
 			buildConfigurationList = E871CA9016DAFE1200A6945C /* Build configuration list for PBXProject "HEVPlayer" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -305,6 +313,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6C0F2EA71906143100EA70F3 /* Images.xcassets in Resources */,
 				E871CAA516DAFE1200A6945C /* InfoPlist.strings in Resources */,
 				6C9A4D8E1851F20B0015FB0B /* ToggleSwitchCell.xib in Resources */,
 				6C9A4D8A1851F20B0015FB0B /* SettingsViewController.xib in Resources */,
@@ -412,6 +421,9 @@
 		E871CAB516DAFE1200A6945C /* Debug */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "HEVPlayer/HEVPlayer-Prefix.pch";
 				HEADER_SEARCH_PATHS = (
@@ -438,6 +450,9 @@
 		E871CAB616DAFE1200A6945C /* Release */ = {
 			isa = XCBuildConfiguration;
 			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
+				CODE_SIGN_IDENTITY = "iPhone Developer";
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "HEVPlayer/HEVPlayer-Prefix.pch";
 				HEADER_SEARCH_PATHS = (
