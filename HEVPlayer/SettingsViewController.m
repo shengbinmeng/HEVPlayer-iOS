@@ -7,7 +7,6 @@
 //
 
 #import "SettingsViewController.h"
-#import "ToggleSwitchCell.h"
 #import "TextFieldCell.h"
 #import "PlayViewController.h"
 
@@ -27,16 +26,13 @@
 
 }
 
-@synthesize settingsTableView;
-
-- (id)initWithNibName:(NSString *)nibNameOrNil bundle:(NSBundle *)nibBundleOrNil
+- (id)initWithStyle:(UITableViewStyle)style
 {
-    self = [super initWithNibName:nibNameOrNil bundle:nibBundleOrNil];
+    self = [super initWithStyle:style];
     if (self) {
-        // Custom initialization
         self.title = @"More with HEVPlayer";
     }
-
+    
     arrayOfStrings = [NSArray arrayWithObjects:@"0 (auto)", @"1", @"2", @"4", nil];
     NSString *num = [[NSUserDefaults standardUserDefaults] valueForKey:@"threadNum"];
     selectedRow = [arrayOfStrings indexOfObject:num];
@@ -70,7 +66,7 @@
     
     // Detect orientation
     UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
-    CGRect frame = self.settingsTableView.frame;
+    CGRect frame = self.tableView.frame;
     
     // Start animation
     [UIView beginAnimations:nil context:NULL];
@@ -84,13 +80,13 @@
         frame.size.height -= keyboardBounds.size.width;
     
     // Apply new size of table view
-    self.settingsTableView.frame = frame;
+    self.tableView.frame = frame;
     
     // Scroll the table view to see the TextField just above the keyboard
     if (actTextField)
     {
-        CGRect textFieldRect = [self.settingsTableView convertRect:actTextField.bounds fromView:actTextField];
-        [self.settingsTableView scrollRectToVisible:textFieldRect animated:NO];
+        CGRect textFieldRect = [self.tableView convertRect:actTextField.bounds fromView:actTextField];
+        [self.tableView scrollRectToVisible:textFieldRect animated:NO];
     }
     
     [UIView commitAnimations];
@@ -106,7 +102,7 @@
     
     // Detect orientation
     UIInterfaceOrientation orientation = [[UIApplication sharedApplication] statusBarOrientation];
-    CGRect frame = self.settingsTableView.frame;
+    CGRect frame = self.tableView.frame;
     
     [UIView beginAnimations:nil context:NULL];
     [UIView setAnimationBeginsFromCurrentState:YES];
@@ -119,7 +115,7 @@
         frame.size.height += keyboardBounds.size.width;
     
     // Apply new size of table view
-    self.settingsTableView.frame = frame;
+    self.tableView.frame = frame;
     
     [UIView commitAnimations];
 }
@@ -151,7 +147,6 @@
     // Release any retained subviews of the main view.
     // e.g. self.myOutlet = nil;
     actTextField = nil;
-    self.settingsTableView = nil;
     
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIKeyboardWillShowNotification object:self];
     [[NSNotificationCenter defaultCenter] removeObserver:self name:UIKeyboardWillHideNotification object:nil];
@@ -356,7 +351,7 @@
     [[NSUserDefaults standardUserDefaults] setValue:[arrayOfStringsFPS objectAtIndex:selectedRowFPS] forKey:@"renderFPS"];
     
     [self viewAnimation:theActionSheet willHidden:YES];
-    [self.settingsTableView reloadData];
+    [self.tableView reloadData];
 }
 
 - (void) cancelButtonPressed
@@ -384,7 +379,7 @@
             [[NSUserDefaults standardUserDefaults] setValue:url forKey:@"pathHistory"];
             
             UIActivityIndicatorView *indicator = [[UIActivityIndicatorView alloc] initWithActivityIndicatorStyle:UIActivityIndicatorViewStyleGray];
-            [self.view insertSubview:indicator aboveSubview:self.settingsTableView];
+            [self.view insertSubview:indicator aboveSubview:self.tableView];
             indicator.center = self.view.center;
             [indicator startAnimating];
             

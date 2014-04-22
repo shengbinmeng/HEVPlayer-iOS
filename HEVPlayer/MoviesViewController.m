@@ -28,7 +28,7 @@
 
 - (void) buttonPressed
 {
-    SettingsViewController *sv = [[SettingsViewController alloc] initWithNibName:@"SettingsViewController" bundle:nil];
+    SettingsViewController *sv = [[SettingsViewController alloc] initWithStyle:UITableViewStyleGrouped];
     [self.navigationController pushViewController:sv animated:YES];
 }
 

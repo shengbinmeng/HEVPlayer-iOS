@@ -11,11 +11,8 @@
 		6C9A4D861851F20B0015FB0B /* HEVPlayerAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C9A4D791851F20B0015FB0B /* HEVPlayerAppDelegate.m */; };
 		6C9A4D881851F20B0015FB0B /* MoviesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C9A4D7C1851F20B0015FB0B /* MoviesViewController.m */; };
 		6C9A4D891851F20B0015FB0B /* SettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C9A4D7E1851F20B0015FB0B /* SettingsViewController.m */; };
-		6C9A4D8A1851F20B0015FB0B /* SettingsViewController.xib in Resources */ = {isa = PBXBuildFile; fileRef = 6C9A4D7F1851F20B0015FB0B /* SettingsViewController.xib */; };
 		6C9A4D8B1851F20B0015FB0B /* TextFieldCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C9A4D811851F20B0015FB0B /* TextFieldCell.m */; };
 		6C9A4D8C1851F20B0015FB0B /* TextFieldCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 6C9A4D821851F20B0015FB0B /* TextFieldCell.xib */; };
-		6C9A4D8D1851F20B0015FB0B /* ToggleSwitchCell.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C9A4D841851F20B0015FB0B /* ToggleSwitchCell.m */; };
-		6C9A4D8E1851F20B0015FB0B /* ToggleSwitchCell.xib in Resources */ = {isa = PBXBuildFile; fileRef = 6C9A4D851851F20B0015FB0B /* ToggleSwitchCell.xib */; };
 		6C9A4D971851F4140015FB0B /* QuartzCore.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9A4D961851F4140015FB0B /* QuartzCore.framework */; };
 		6C9A4D991851F4270015FB0B /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9A4D981851F4270015FB0B /* OpenGLES.framework */; };
 		6C9A4D9F1851F4440015FB0B /* libavcodec.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9A4D9A1851F4440015FB0B /* libavcodec.a */; };
@@ -56,13 +53,9 @@
 		6C9A4D7C1851F20B0015FB0B /* MoviesViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = MoviesViewController.m; sourceTree = "<group>"; };
 		6C9A4D7D1851F20B0015FB0B /* SettingsViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = SettingsViewController.h; sourceTree = "<group>"; };
 		6C9A4D7E1851F20B0015FB0B /* SettingsViewController.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = SettingsViewController.m; sourceTree = "<group>"; };
-		6C9A4D7F1851F20B0015FB0B /* SettingsViewController.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = SettingsViewController.xib; sourceTree = "<group>"; };
 		6C9A4D801851F20B0015FB0B /* TextFieldCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = TextFieldCell.h; sourceTree = "<group>"; };
 		6C9A4D811851F20B0015FB0B /* TextFieldCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = TextFieldCell.m; sourceTree = "<group>"; };
 		6C9A4D821851F20B0015FB0B /* TextFieldCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = TextFieldCell.xib; sourceTree = "<group>"; };
-		6C9A4D831851F20B0015FB0B /* ToggleSwitchCell.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ToggleSwitchCell.h; sourceTree = "<group>"; };
-		6C9A4D841851F20B0015FB0B /* ToggleSwitchCell.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ToggleSwitchCell.m; sourceTree = "<group>"; };
-		6C9A4D851851F20B0015FB0B /* ToggleSwitchCell.xib */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = file.xib; path = ToggleSwitchCell.xib; sourceTree = "<group>"; };
 		6C9A4D961851F4140015FB0B /* QuartzCore.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = QuartzCore.framework; path = System/Library/Frameworks/QuartzCore.framework; sourceTree = SDKROOT; };
 		6C9A4D981851F4270015FB0B /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		6C9A4D9A1851F4440015FB0B /* libavcodec.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libavcodec.a; path = "ffmpeg-2.0/lib/libavcodec.a"; sourceTree = "<group>"; };
@@ -229,14 +222,10 @@
 				E871CACD16DB0BCE00A6945C /* PlayViewController.xib */,
 				6C9A4D7D1851F20B0015FB0B /* SettingsViewController.h */,
 				6C9A4D7E1851F20B0015FB0B /* SettingsViewController.m */,
-				6C9A4D7F1851F20B0015FB0B /* SettingsViewController.xib */,
 				E871CAA116DAFE1200A6945C /* Supporting Files */,
 				6C9A4D801851F20B0015FB0B /* TextFieldCell.h */,
 				6C9A4D811851F20B0015FB0B /* TextFieldCell.m */,
 				6C9A4D821851F20B0015FB0B /* TextFieldCell.xib */,
-				6C9A4D831851F20B0015FB0B /* ToggleSwitchCell.h */,
-				6C9A4D841851F20B0015FB0B /* ToggleSwitchCell.m */,
-				6C9A4D851851F20B0015FB0B /* ToggleSwitchCell.xib */,
 				6C0F2EA61906143100EA70F3 /* Images.xcassets */,
 			);
 			path = HEVPlayer;
@@ -315,8 +304,6 @@
 			files = (
 				6C0F2EA71906143100EA70F3 /* Images.xcassets in Resources */,
 				E871CAA516DAFE1200A6945C /* InfoPlist.strings in Resources */,
-				6C9A4D8E1851F20B0015FB0B /* ToggleSwitchCell.xib in Resources */,
-				6C9A4D8A1851F20B0015FB0B /* SettingsViewController.xib in Resources */,
 				E871CAAD16DAFE1200A6945C /* Default.png in Resources */,
 				E871CAAF16DAFE1200A6945C /* Default@2x.png in Resources */,
 				E871CAB116DAFE1200A6945C /* Default-568h@2x.png in Resources */,
@@ -346,7 +333,6 @@
 				6C9A4D8B1851F20B0015FB0B /* TextFieldCell.m in Sources */,
 				6CE3B04E18D2D6A200C65F26 /* framequeue.cpp in Sources */,
 				6C9A4D881851F20B0015FB0B /* MoviesViewController.m in Sources */,
-				6C9A4D8D1851F20B0015FB0B /* ToggleSwitchCell.m in Sources */,
 				6C9A4D891851F20B0015FB0B /* SettingsViewController.m in Sources */,
 				6CE3B04C18D2D6A200C65F26 /* audio_decoder.cpp in Sources */,
 				6CE3B06918D2DD2B00C65F26 /* GLRenderer.mm in Sources */,
