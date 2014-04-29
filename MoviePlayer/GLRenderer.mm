@@ -13,12 +13,12 @@ extern struct VideoFrame* gVF;
 
 #define ENABLE_LOGD 0
 #if ENABLE_LOGD
-#define LOGD(...)  printf(__VA_ARGS__)
+#define LOGD(...) printf(__VA_ARGS__)
 #else
 #define LOGD(...)
 #endif
-#define LOGI LOGD
-#define LOGE LOGD
+#define LOGI(...) printf(__VA_ARGS__)
+#define LOGE LOGI
 
 static const char gVertexShader[] =
 "attribute vec4 a_position;\n"
@@ -255,12 +255,17 @@ static GLfloat textureCoords[] = {
 			vertexPositions[1] = vertexPositions[4] = - maxY;
 			vertexPositions[7] = vertexPositions[10] = maxY;
             
+            vertexPositions[0] = vertexPositions[6] = - 1.0;
+			vertexPositions[3] = vertexPositions[9] = 1.0;
 		} else {
 			// fill screen in height, and leave space in X
 			float scale = (float) backingHeight / (float) height;
 			float maxX = ((float) width * scale) / (float) backingWidth;
 			vertexPositions[0] = vertexPositions[6] = - maxX;
 			vertexPositions[3] = vertexPositions[9] = maxX;
+            
+            vertexPositions[1] = vertexPositions[4] = - 1.0;
+			vertexPositions[7] = vertexPositions[10] = 1.0;
 		}
         
 		// modify the texture coordinates
