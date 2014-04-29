@@ -129,10 +129,10 @@ int MediaPlayer::prepareAudio() {
 	// get a pointer to the codec context for the video stream
 	AVStream* stream = mFormatContext->streams[mAudioStreamIndex];
 	AVCodecContext* codec_ctx = stream->codec;
-	LOGD("audio codec id: %d \n", codec_ctx->codec_id);
+	LOGI("audio codec id: %d \n", codec_ctx->codec_id);
 	char buffer[128];
 	av_get_sample_fmt_string(buffer, 128, codec_ctx->sample_fmt);
-	LOGD("sample rate: %d, format: %d (%s) \n", codec_ctx->sample_rate, codec_ctx->sample_fmt, buffer);
+	LOGI("sample rate: %d, format: %d (%s) \n", codec_ctx->sample_rate, codec_ctx->sample_fmt, buffer);
 
 	AVCodec* codec = avcodec_find_decoder(codec_ctx->codec_id ? codec_ctx->codec_id : CODEC_ID_MP3);
 	if (codec == NULL) {
@@ -168,8 +168,8 @@ int MediaPlayer::prepareVideo() {
 	// get a pointer to the codec context of the video stream
 	AVStream* stream = mFormatContext->streams[mVideoStreamIndex];
 	AVCodecContext* codec_ctx = stream->codec;
-	LOGD("video codec id: %d \n", codec_ctx->codec_id);
-	LOGD("frame rate and time base: %d/%d = %f, %d/%d = %f \n", stream->r_frame_rate.num, stream->r_frame_rate.den, (float)stream->r_frame_rate.num / stream->r_frame_rate.den, stream->time_base.num, stream->time_base.den, (float)stream->time_base.num / stream->time_base.den);
+	LOGI("video codec id: %d \n", codec_ctx->codec_id);
+	LOGI("frame rate and time base: %d/%d = %f, %d/%d = %f \n", stream->r_frame_rate.num, stream->r_frame_rate.den, (float)stream->r_frame_rate.num / stream->r_frame_rate.den, stream->time_base.num, stream->time_base.den, (float)stream->time_base.num / stream->time_base.den);
 
 	// find and open video decoder
 	AVCodec* codec = avcodec_find_decoder(codec_ctx->codec_id);
@@ -190,7 +190,7 @@ int MediaPlayer::prepareVideo() {
 
 	mVideoWidth = codec_ctx->width;
 	mVideoHeight = codec_ctx->height;
-	LOGD("width: %d, height: %d \n", codec_ctx->width, codec_ctx->height);
+	LOGI("width: %d, height: %d \n", codec_ctx->width, codec_ctx->height);
 
 	return 0;
 }

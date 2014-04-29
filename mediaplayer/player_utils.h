@@ -11,15 +11,15 @@
 	#define __STDC_FORMAT_MACROS
 #endif
 
-#define ENABLE_LOGD 1
+#define ENABLE_LOGD 0
 
 #if ENABLE_LOGD
 #define LOGD(...)  printf(__VA_ARGS__)
 #else
 #define LOGD(...)
 #endif
-#define LOGI LOGD
-#define LOGE LOGD
+#define LOGI(...) printf(__VA_ARGS__)
+#define LOGE LOGI
 
 void detachJVM();
 
