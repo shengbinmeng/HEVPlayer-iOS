@@ -132,7 +132,7 @@ int MediaPlayer::prepareAudio() {
 	LOGI("audio codec id: %d \n", codec_ctx->codec_id);
 	char buffer[128];
 	av_get_sample_fmt_string(buffer, 128, codec_ctx->sample_fmt);
-	LOGI("sample rate: %d, format: %d (%s) \n", codec_ctx->sample_rate, codec_ctx->sample_fmt, buffer);
+	LOGI("sample rate: %d, format: %d (%s), channels: %d \n", codec_ctx->sample_rate, codec_ctx->sample_fmt, buffer, codec_ctx->channels);
 
 	AVCodec* codec = avcodec_find_decoder(codec_ctx->codec_id ? codec_ctx->codec_id : CODEC_ID_MP3);
 	if (codec == NULL) {

@@ -4,10 +4,12 @@
 #include <time.h>
 #include "mp_listener.h"
 #include "GLRenderer.h"
+#include "ALRenderer.h"
 
 #define LOG_TAG "mp_listener"
 
-extern GLRenderer *gRenderer;
+extern GLRenderer *gGLRenderer;
+extern ALRenderer *gALRenderer;
 
 MediaPlayerListener::MediaPlayerListener() {
     
@@ -22,11 +24,11 @@ void MediaPlayerListener::postEvent(int msg, int ext1, int ext2) {
 }
 
 int MediaPlayerListener::audioTrackWrite(void* data, int offset, int data_size) {
-    
+    [gALRenderer renderPCM:data ofSize:data_size];
     return 0;
 }
 
 int MediaPlayerListener::drawFrame(VideoFrame *vf) {
-    [gRenderer render:vf];
+    [gGLRenderer render:vf];
 	return 0;
 }

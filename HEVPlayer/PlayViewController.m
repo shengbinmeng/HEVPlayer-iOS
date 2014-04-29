@@ -9,8 +9,6 @@
 #import "PlayViewController.h"
 #import "GLView.h"
 
-GLRenderer *gRenderer;
-
 @implementation PlayViewController
 
 {
@@ -84,7 +82,6 @@ GLRenderer *gRenderer;
         return ;
     } else {
         self.player.renderer = ((GLView*)self.view).renderer;
-        gRenderer = self.player.renderer;
         [self.player setOutputViews:nil:self.infoLabel];
 
         int ret = [self.player start];

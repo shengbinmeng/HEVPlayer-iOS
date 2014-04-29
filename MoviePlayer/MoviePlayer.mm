@@ -9,13 +9,16 @@
 #import "MoviePlayer.h"
 #import "GLRenderer.h"
 #include "mediaplayer.h"
+#import "AudioHandler.h"
+#import "ALRenderer.h"
+
+GLRenderer *gGLRenderer;
+ALRenderer *gALRenderer;
 
 @implementation MoviePlayer
 {
-    NSString *moviePath;
-    NSThread *decodeThread;
-    BOOL isBusy, stopRender;
-    MediaPlayer *gMP;
+    MediaPlayer *_mediaPlayer;
+    AudioHandler *_audioHandler;
 }
 
 - (id) init
@@ -25,7 +28,7 @@
     MediaPlayer *mp = new MediaPlayer();
     MediaPlayerListener* listener = new MediaPlayerListener();
 	mp->setListener(listener);
-    gMP = mp;
+    _mediaPlayer = mp;
     return self;
 }
 
@@ -37,60 +40,63 @@
 
 - (int) open:(NSString*) path
 {
-    moviePath = path;
-	char * filepath = (char*)[moviePath UTF8String];
-    gMP->open(filepath);
-    gMP->setLoopPlay(1);
+	char * filepath = (char*)[path UTF8String];
+    _mediaPlayer->open(filepath);
+    _mediaPlayer->setLoopPlay(1);
     return 0;
 }
 
 - (int) start
 {
-    return gMP->start();
+    gGLRenderer = self.renderer;
+    gALRenderer = [[ALRenderer alloc] init];
+    return _mediaPlayer->start();
 }
 
 - (int) go
 {
-    return gMP->go();
+    return _mediaPlayer->go();
 }
 
 - (int) pause
 {
-    return gMP->pause();
+    return _mediaPlayer->pause();
 }
 
 - (int) stop
 {
-    return gMP->stop();
+    [gALRenderer stop];
+    gALRenderer = nil;
+    return _mediaPlayer->stop();
 }
 
 - (int) close
 {
-    return gMP->close();
+    return _mediaPlayer->close();
 }
 
 - (double) getMovieTimeInSeconds
 {
     int msec = -1;
-    gMP->getCurrentPosition(&msec);
+    _mediaPlayer->getCurrentPosition(&msec);
     return msec/1000.0;
 }
 
 - (double) getMovieDurationInSeconds
 {
     int msec = -1;
-    gMP->getDuration(&msec);
+    _mediaPlayer->getDuration(&msec);
     return msec/1000.0;
 }
 
 - (int) seekTo:(int64_t) timeInSeconds
 {
-    return gMP->seekTo(timeInSeconds*1000);
+    return _mediaPlayer->seekTo(timeInSeconds*1000);
 }
 
 - (BOOL) movieIsPlaying
 {
-    return gMP->isPlaying();
+    return _mediaPlayer->isPlaying();
 }
 
 @end

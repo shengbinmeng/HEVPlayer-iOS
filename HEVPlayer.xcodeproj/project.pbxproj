@@ -8,6 +8,10 @@
 
 /* Begin PBXBuildFile section */
 		6C0F2EA71906143100EA70F3 /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 6C0F2EA61906143100EA70F3 /* Images.xcassets */; };
+		6C158F811906641B00FB0960 /* AudioHandler.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C158F801906641B00FB0960 /* AudioHandler.m */; };
+		6C158F841906836E00FB0960 /* ALRenderer.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C158F831906836E00FB0960 /* ALRenderer.m */; };
+		6C158F86190688D900FB0960 /* OpenAL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C158F85190688D900FB0960 /* OpenAL.framework */; };
+		6C158F88190688F000FB0960 /* AudioToolbox.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C158F87190688F000FB0960 /* AudioToolbox.framework */; };
 		6C9A4D861851F20B0015FB0B /* HEVPlayerAppDelegate.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C9A4D791851F20B0015FB0B /* HEVPlayerAppDelegate.m */; };
 		6C9A4D881851F20B0015FB0B /* MoviesViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C9A4D7C1851F20B0015FB0B /* MoviesViewController.m */; };
 		6C9A4D891851F20B0015FB0B /* SettingsViewController.m in Sources */ = {isa = PBXBuildFile; fileRef = 6C9A4D7E1851F20B0015FB0B /* SettingsViewController.m */; };
@@ -47,6 +51,12 @@
 
 /* Begin PBXFileReference section */
 		6C0F2EA61906143100EA70F3 /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Images.xcassets; sourceTree = "<group>"; };
+		6C158F7F1906641B00FB0960 /* AudioHandler.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AudioHandler.h; sourceTree = "<group>"; };
+		6C158F801906641B00FB0960 /* AudioHandler.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = AudioHandler.m; sourceTree = "<group>"; };
+		6C158F821906836E00FB0960 /* ALRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = ALRenderer.h; sourceTree = "<group>"; };
+		6C158F831906836E00FB0960 /* ALRenderer.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = ALRenderer.m; sourceTree = "<group>"; };
+		6C158F85190688D900FB0960 /* OpenAL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenAL.framework; path = System/Library/Frameworks/OpenAL.framework; sourceTree = SDKROOT; };
+		6C158F87190688F000FB0960 /* AudioToolbox.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = AudioToolbox.framework; path = System/Library/Frameworks/AudioToolbox.framework; sourceTree = SDKROOT; };
 		6C9A4D781851F20B0015FB0B /* HEVPlayerAppDelegate.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = HEVPlayerAppDelegate.h; sourceTree = "<group>"; };
 		6C9A4D791851F20B0015FB0B /* HEVPlayerAppDelegate.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; path = HEVPlayerAppDelegate.m; sourceTree = "<group>"; };
 		6C9A4D7B1851F20B0015FB0B /* MoviesViewController.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MoviesViewController.h; sourceTree = "<group>"; };
@@ -109,6 +119,8 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6C158F88190688F000FB0960 /* AudioToolbox.framework in Frameworks */,
+				6C158F86190688D900FB0960 /* OpenAL.framework in Frameworks */,
 				6C9A4DA71851F4FA0015FB0B /* liblenthevcdec.a in Frameworks */,
 				6C9A4DA51851F4640015FB0B /* libiconv.dylib in Frameworks */,
 				6C9A4D9F1851F4440015FB0B /* libavcodec.a in Frameworks */,
@@ -167,12 +179,16 @@
 		6CE3B06218D2DD2B00C65F26 /* MoviePlayer */ = {
 			isa = PBXGroup;
 			children = (
+				6C158F821906836E00FB0960 /* ALRenderer.h */,
+				6C158F831906836E00FB0960 /* ALRenderer.m */,
 				6CE3B06318D2DD2B00C65F26 /* GLRenderer.h */,
 				6CE3B06418D2DD2B00C65F26 /* GLRenderer.mm */,
 				6CE3B06518D2DD2B00C65F26 /* GLView.h */,
 				6CE3B06618D2DD2B00C65F26 /* GLView.m */,
 				6CE3B06718D2DD2B00C65F26 /* MoviePlayer.h */,
 				6CE3B06818D2DD2B00C65F26 /* MoviePlayer.mm */,
+				6C158F7F1906641B00FB0960 /* AudioHandler.h */,
+				6C158F801906641B00FB0960 /* AudioHandler.m */,
 			);
 			path = MoviePlayer;
 			sourceTree = "<group>";
@@ -200,6 +216,8 @@
 		E871CA9916DAFE1200A6945C /* Frameworks */ = {
 			isa = PBXGroup;
 			children = (
+				6C158F87190688F000FB0960 /* AudioToolbox.framework */,
+				6C158F85190688D900FB0960 /* OpenAL.framework */,
 				6C9A4DA41851F4640015FB0B /* libiconv.dylib */,
 				6C9A4D981851F4270015FB0B /* OpenGLES.framework */,
 				6C9A4D961851F4140015FB0B /* QuartzCore.framework */,
@@ -326,11 +344,13 @@
 				6CE3B04D18D2D6A200C65F26 /* decoder.cpp in Sources */,
 				6CE3B05118D2D6A200C65F26 /* thread.cpp in Sources */,
 				6CE3B05018D2D6A200C65F26 /* packetqueue.cpp in Sources */,
+				6C158F811906641B00FB0960 /* AudioHandler.m in Sources */,
 				6C9A4D861851F20B0015FB0B /* HEVPlayerAppDelegate.m in Sources */,
 				E871CACE16DB0BCE00A6945C /* PlayViewController.m in Sources */,
 				6CE3B06B18D2DD2B00C65F26 /* MoviePlayer.mm in Sources */,
 				6CE3B04F18D2D6A200C65F26 /* mediaplayer.cpp in Sources */,
 				6C9A4D8B1851F20B0015FB0B /* TextFieldCell.m in Sources */,
+				6C158F841906836E00FB0960 /* ALRenderer.m in Sources */,
 				6CE3B04E18D2D6A200C65F26 /* framequeue.cpp in Sources */,
 				6C9A4D881851F20B0015FB0B /* MoviesViewController.m in Sources */,
 				6C9A4D891851F20B0015FB0B /* SettingsViewController.m in Sources */,
