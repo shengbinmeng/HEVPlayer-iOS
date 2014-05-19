@@ -12,17 +12,9 @@
 #import <AudioToolbox/AudioFile.h>
 #import <AudioToolbox/ExtendedAudioFile.h>
 #include "audioqueue.h"
+#include "player_utils.h"
 
-#define ENABLE_LOGD 1
-#if ENABLE_LOGD
-#define LOGD(...) printf(__VA_ARGS__)
-#else
-#define LOGD(...)
-#endif
-#define LOGI(...) printf(__VA_ARGS__)
-#define LOGE LOGI
-
-#define BUFFER_NUM 6
+#define BUFFER_NUM 3
 #define BUFFER_SIZE (4096 * 4)
 
 AudioQueue gAudioQueue;
@@ -228,11 +220,8 @@ void checkError()
     int processed = 0;
     alGetSourcei(_alSource, AL_BUFFERS_PROCESSED, &processed);
     checkError();
-    LOGD("processed: %d \n", processed);
     while (processed == 0 && _stop == 0) {
-        usleep(250000);
-        LOGD("wait for the buffer to be processed... \n");
-        
+        usleep(100000);
         alGetSourcei(_alSource, AL_BUFFERS_PROCESSED, &processed);
         checkError();
     }
