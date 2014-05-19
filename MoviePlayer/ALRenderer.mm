@@ -11,6 +11,7 @@
 #import <OpenAL/alc.h>
 #import <AudioToolbox/AudioFile.h>
 #import <AudioToolbox/ExtendedAudioFile.h>
+#include "audioqueue.h"
 
 #define ENABLE_LOGD 1
 #if ENABLE_LOGD
@@ -21,8 +22,10 @@
 #define LOGI(...) printf(__VA_ARGS__)
 #define LOGE LOGI
 
-#define BUFFER_NUM 3
-#define BUFFER_SIZE (4096 * 8)
+#define BUFFER_NUM 6
+#define BUFFER_SIZE (4096 * 4)
+
+AudioQueue gAudioQueue;
 
 @implementation ALRenderer
 {
@@ -33,10 +36,9 @@
     ALuint _audioFormat;
     ALuint _audioFreqence;
     
-    int _setup;
+    int _setup, _stop;
     uint8_t* _bufferData;
     uint32_t _bufferSize;
-
 }
 
 
@@ -68,28 +70,32 @@ void checkError()
 
 }
 
-- (bool) playing
+- (bool) isPlaying
 {
     ALenum state;
-    
     alGetSourcei(_alSource, AL_SOURCE_STATE, &state);
-    
     return (state == AL_PLAYING);
 }
 
-- (void) setup
+/*
+- (void) fillBuffer:(ALuint) bid
 {
-    //alcMakeContextCurrent(_alContext);
+    AudioData *ad = NULL;
+    while (_bufferSize < BUFFER_SIZE) {
+        gAudioQueue.get(&ad, true);
+        memcpy(_bufferData + _bufferSize, ad->pcm_data, ad->data_size);
+        _bufferSize += ad->data_size;
+        free(ad->pcm_data);
+    }
+
+    alBufferData(bid, _audioFormat, _bufferData, BUFFER_SIZE, _audioFreqence);
     checkError();
+    
+    _bufferSize = 0;
 }
 
-
-- (id)init
+- (void) play
 {
-    self = [super init];
-    if (self == nil) {
-        return nil;
-    }
     _audioFormat = AL_FORMAT_STEREO16;
     _audioFreqence = 44100;
     
@@ -107,89 +113,112 @@ void checkError()
     
     alGenSources(1, &_alSource);
     checkError();
-    alSourcei(_alSource, AL_BUFFER, 0);
+    alGenBuffers(BUFFER_NUM, _alBuffers);
     checkError();
-
     
-    alSource3f(_alSource, AL_POSITION,        0.0, 0.0, 0.0);
-    alSource3f(_alSource, AL_VELOCITY,        0.0, 0.0, 0.0);
-    alSource3f(_alSource, AL_DIRECTION,       0.0, 0.0, 0.0);
-    alSourcef (_alSource, AL_ROLLOFF_FACTOR,  0.0          );
-    alSourcei (_alSource, AL_SOURCE_RELATIVE, AL_TRUE      );
-    alSourcei(_alSource, AL_LOOPING, AL_FALSE);
-    
-    
-    _bufferData = malloc(BUFFER_SIZE);
-    _bufferSize = 0;
+    _bufferData = (uint8_t*) malloc(BUFFER_SIZE);
+    _bufferSize = BUFFER_SIZE;
     for (int i = 0; i < BUFFER_NUM; i++) {
-        alGenBuffers(1, &_alBuffers[i]);
-        checkError();
-        
-        alBufferData(_alBuffers[i], _audioFormat, _bufferData, BUFFER_SIZE, _audioFreqence);
-        checkError();
-
-        alSourceQueueBuffers(_alSource, 1, &_alBuffers[i]);
-        checkError();
+        [self fillBuffer:_alBuffers[i]];
     }
+    
+    alSourceQueueBuffers(_alSource, BUFFER_NUM, _alBuffers);
+    checkError();
     
     alSourcePlay(_alSource);
     checkError();
 
+    while (1) {
+        int processed = 0;
+        alGetSourcei(_alSource, AL_BUFFERS_PROCESSED, &processed);
+        LOGI("processed: %d \n", processed);
+        checkError();
+        while (processed--) {
+            ALuint buffer;
+            alSourceUnqueueBuffers(_alSource, 1, &buffer);
+            checkError();
+            
+            [self fillBuffer:buffer];
+            
+            alSourceQueueBuffers(_alSource, 1, &buffer);
+            checkError();
+            
+            LOGD("fill a buffer, processed: %d\n", processed);
+        }
+        
+        if([self isPlaying] == false) {
+            LOGD("re-play \n");
+            alSourcePlay(_alSource);
+            checkError();
+        }
+        
+        usleep(500000);
+    }
+}
+
+- (id)init
+{
+    self = [super init];
+    if (self == nil) {
+        return nil;
+    }
+    
+    [NSThread detachNewThreadSelector:@selector(play) toTarget:self withObject:nil];
+    
+    return self;
+}
+ */
+
+
+- (id)init
+{
+    self = [super init];
+    if (self == nil) {
+        return nil;
+    }
+    
+    _audioFormat = AL_FORMAT_STEREO16;
+    _audioFreqence = 44100;
+    
+    _setup = 0;
+    _stop = 0;
+    
+    _alDevice = alcOpenDevice(NULL); // select the "preferred device"
+    checkError();
+    if (_alDevice) {
+        // use the device to make a context
+        _alContext = alcCreateContext(_alDevice,NULL);
+        checkError();
+        alcMakeContextCurrent(_alContext);
+        checkError();
+    }
+    
+    alGenSources(1, &_alSource);
+    checkError();
+    alGenBuffers(BUFFER_NUM, _alBuffers);
+    checkError();
     
     return self;
 }
 
 
-- (void) renderPCM:(void*) data ofSize:(int) size
+- (void) setup
 {
-    [self renderPCM2:data ofSize:size]; return;
-    LOGD("render an audio PCM data, size: %d \n", size);
-    if (_setup == 0) {
-        [self setup];
-        _setup = 1;
-	}
-    
-    // make sure there is buffer processed, so we have space to put
-    int processed = 0;
-    alGetSourcei(_alSource, AL_BUFFERS_PROCESSED, &processed);
-    LOGD("processed: %d \n", processed);
-    checkError();
-    while (processed == 0) {
-        usleep(1000000);
-        LOGD("in while, sleep zzzzzzzz\n");
-        
-        alGetSourcei(_alSource, AL_BUFFERS_PROCESSED, &processed);
-        checkError();
-        LOGD("after sleep, processed: %d \n", processed);
+    _bufferData = (uint8_t*) malloc(BUFFER_SIZE);
+    _bufferSize = 0;
+    for (int i = 0; i < BUFFER_NUM; i++) {
+        alBufferData(_alBuffers[i], _audioFormat, _bufferData, BUFFER_SIZE, _audioFreqence);
     }
     
-    // put into buffer
-    ALuint buffer;
-    alSourceUnqueueBuffers(_alSource, 1, &buffer);
-    checkError();
-    LOGD("buffer: %d \n", buffer);
-    alBufferData(buffer, _audioFormat, data, size, _audioFreqence);
-    
-    alSourceQueueBuffers(_alSource, 1, &buffer);
+    alSourceQueueBuffers(_alSource, BUFFER_NUM, _alBuffers);
     checkError();
     
-    
-    if (![self playing]) {
-        LOGD("not playing !\n");
-        //alSourcePlay(_alSource);
-    }
-
+    alSourcePlay(_alSource);
+    checkError();
 }
 
-- (void) renderPCM2:(void*) data ofSize:(int) size
+- (void) renderPCM:(void*) data ofSize:(int) size
 {
-    if (![self playing]) {
-        //LOGD("not playing !\n");
-        //alSourcePlay(_alSource);
-        //return;
-    }
-
-    LOGD("render an audio PCM data, size: %d \n", size);
     if (_setup == 0) {
         [self setup];
         _setup = 1;
@@ -198,43 +227,45 @@ void checkError()
     // make sure there is buffer processed, so we have space to put
     int processed = 0;
     alGetSourcei(_alSource, AL_BUFFERS_PROCESSED, &processed);
-    LOGD("processed: %d \n", processed);
     checkError();
-    while (processed == 0) {
+    LOGD("processed: %d \n", processed);
+    while (processed == 0 && _stop == 0) {
         usleep(250000);
-        LOGD("in while, sleep zzzzzzzz\n");
+        LOGD("wait for the buffer to be processed... \n");
         
         alGetSourcei(_alSource, AL_BUFFERS_PROCESSED, &processed);
         checkError();
-        LOGD("after sleep, processed: %d \n", processed);
     }
     
     memcpy(_bufferData + _bufferSize, data, size);
     _bufferSize += size;
+
     if (_bufferSize == BUFFER_SIZE) {
         // put into buffer
         ALuint buffer;
         alSourceUnqueueBuffers(_alSource, 1, &buffer);
         checkError();
-        LOGD("buffer: %d \n", buffer);
+        
         alBufferData(buffer, _audioFormat, _bufferData, _bufferSize, _audioFreqence);
+        checkError();
         
         alSourceQueueBuffers(_alSource, 1, &buffer);
         checkError();
+        
+        if (![self isPlaying]) {
+            alSourcePlay(_alSource);
+            checkError();
+        }
+        
         _bufferSize = 0;
     }
-    
-    LOGD("_bufferSize: %d \n", _bufferSize);
-    
 }
-
-
-
 
 
 
 - (void) stop
 {
+    _stop = 1;
     alSourceStop(_alSource);
 }
 

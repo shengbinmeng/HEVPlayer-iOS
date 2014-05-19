@@ -18,7 +18,6 @@ ALRenderer *gALRenderer;
 @implementation MoviePlayer
 {
     MediaPlayer *_mediaPlayer;
-    AudioHandler *_audioHandler;
 }
 
 - (id) init
@@ -50,7 +49,8 @@ ALRenderer *gALRenderer;
 {
     gGLRenderer = self.renderer;
     gALRenderer = [[ALRenderer alloc] init];
-    return _mediaPlayer->start();
+    _mediaPlayer->start();
+    return 0;
 }
 
 - (int) go
