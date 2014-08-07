@@ -208,9 +208,6 @@ static GLfloat textureCoords[] = {
     // genarate frame and render buffers
     glGenFramebuffers(1, &defaultFramebuffer);
     glGenRenderbuffers(1, &colorRenderbuffer);
-    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebuffer);
-    glBindRenderbuffer(GL_RENDERBUFFER, colorRenderbuffer);
-    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorRenderbuffer);
     
     needSetup = 0;
     
@@ -220,12 +217,15 @@ static GLfloat textureCoords[] = {
 - (int) resizeFromLayer:(CAEAGLLayer *)layer
 {
     // Allocate color buffer backing based on the current layer size
+    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebuffer);
     glBindRenderbuffer(GL_RENDERBUFFER, colorRenderbuffer);
     [context renderbufferStorage:GL_RENDERBUFFER fromDrawable:layer];
     glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_WIDTH, &backingWidth);
     glGetRenderbufferParameteriv(GL_RENDERBUFFER, GL_RENDERBUFFER_HEIGHT, &backingHeight);
-    
-    if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE) {
+    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_RENDERBUFFER, colorRenderbuffer);
+
+    int status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+    if (status != GL_FRAMEBUFFER_COMPLETE) {
         LOGI("failed to make complete framebuffer object %x \n", glCheckFramebufferStatus(GL_FRAMEBUFFER));
         return -1;
     }
