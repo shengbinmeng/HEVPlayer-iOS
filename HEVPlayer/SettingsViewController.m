@@ -194,7 +194,7 @@
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section
 {
     if (section == 0) {
-        return 2;
+        return 3;
     } else if (section == 1) {
         return 1;
     } else if (section == 2) {
@@ -235,6 +235,15 @@
             [cell.textLabel setTextAlignment:NSTextAlignmentCenter];
             return cell;
         }
+        if ([indexPath row] == 2) {
+            UITableViewCell * cell = [tableView dequeueReusableCellWithIdentifier:@"styleDefaultCell"];
+            if(cell == nil) {
+                cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleDefault reuseIdentifier:@"styleDefaultCell"];
+            }
+            [cell.textLabel setText:@"Play"];
+            [cell.textLabel setTextAlignment:NSTextAlignmentCenter];
+            return cell;
+        }
     }
        
     if ([indexPath section] == 1) {
@@ -256,7 +265,7 @@
                 cell = [[UITableViewCell alloc] initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:@"styleValue1Cell"];
             }
             
-            [cell.textLabel setText:@"Decoding Thread Number"];
+            [cell.textLabel setText:@"Decoding thread number"];
             [cell.textLabel setFont:[UIFont systemFontOfSize:17.0]];
             NSString *num = [[NSUserDefaults standardUserDefaults] valueForKey:@"threadNum"];
             [cell.detailTextLabel setText:num];
@@ -301,7 +310,7 @@
 {
 	NSString *footerText = @"";
     if (section == 0) {
-        footerText = @"Input a valid URL and click Download to add it to Movies";
+        footerText = @"Input a valid URL and click Download to add it to Movies, or click Play to play it directly.";
     }
     return footerText;
 }
@@ -370,8 +379,8 @@
         if ([indexPath row] == 1) {
             [tableView deselectRowAtIndexPath:indexPath animated:NO];
             NSString *url = [((TextFieldCell*)[tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]]).textField text];
-            if ([url length] < 9 || (([[url substringToIndex:7] isEqualToString:@"http://"]) == NO) || ([[url substringFromIndex:[url length] - 5] isEqualToString:@".hevc"] == NO)) {
-                UIAlertView * alert = [[UIAlertView alloc] initWithTitle:@"Message" message:@"Input is invalid!\nURL should start with 'http://' and end with .hevc" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+            if ([[url substringToIndex:7] isEqualToString:@"http://"] == NO) {
+                UIAlertView * alert = [[UIAlertView alloc] initWithTitle:@"Message" message:@"Input is invalid!\nURL should start with 'http://'" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
                 [alert show];
                 return ;
             }
@@ -389,6 +398,24 @@
             // should load large data in the background
             [self performSelectorInBackground:@selector(loadData:) withObject:url];
                         
+            return;
+        }
+        
+        if ([indexPath row] == 2) {
+            [tableView deselectRowAtIndexPath:indexPath animated:NO];
+            NSString *url = [((TextFieldCell*)[tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:0 inSection:0]]).textField text];
+            if ([[url substringToIndex:7] isEqualToString:@"http://"] == NO) {
+                UIAlertView * alert = [[UIAlertView alloc] initWithTitle:@"Message" message:@"Input is invalid!\nURL should start with 'http://'" delegate:nil cancelButtonTitle:@"OK" otherButtonTitles:nil];
+                [alert show];
+                return ;
+            }
+            
+            [[NSUserDefaults standardUserDefaults] setValue:url forKey:@"pathHistory"];
+            
+            [[NSUserDefaults standardUserDefaults] setValue:url forKey:@"videoPath"];
+            PlayViewController *playViewController = [[PlayViewController alloc] initWithNibName:@"PlayViewController" bundle:nil];
+            [self.navigationController pushViewController:playViewController animated:YES];
+            
             return;
         }
     }
