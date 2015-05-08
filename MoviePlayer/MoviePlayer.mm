@@ -40,17 +40,16 @@ ALRenderer *gALRenderer;
 - (int) open:(NSString*) path
 {
 	char * filepath = (char*)[path UTF8String];
-    _mediaPlayer->open(filepath);
-    _mediaPlayer->setLoopPlay(1);
-    return 0;
+    int ret = _mediaPlayer->open(filepath);
+    return ret;
 }
 
 - (int) start
 {
     gGLRenderer = self.renderer;
     gALRenderer = [[ALRenderer alloc] init];
-    _mediaPlayer->start();
-    return 0;
+    _mediaPlayer->setLoopPlay(1);
+    return _mediaPlayer->start();
 }
 
 - (int) go

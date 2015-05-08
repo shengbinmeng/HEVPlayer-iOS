@@ -78,7 +78,9 @@ MediaPlayer::MediaPlayer() {
 	mCurrentPosition = 0;
 	mSeekPosition = 0;
 	mCurrentState = MEDIA_PLAYER_IDLE;
-
+    mAudioStreamIndex = -1;
+    mVideoStreamIndex = -1;
+    
 	mVideoWidth = mVideoHeight = 0;
 	mFrameLastDelay = mFrameLastPTS = 0;
 	mAudioClock = 0;
