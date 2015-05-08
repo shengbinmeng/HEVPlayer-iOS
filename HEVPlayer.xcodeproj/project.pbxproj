@@ -299,7 +299,7 @@
 			isa = PBXProject;
 			attributes = {
 				CLASSPREFIX = HEVPlayer;
-				LastUpgradeCheck = 0450;
+				LastUpgradeCheck = 0630;
 				ORGANIZATIONNAME = "Peking University";
 				TargetAttributes = {
 					E871CA9516DAFE1200A6945C = {
@@ -406,6 +406,7 @@
 				GCC_WARN_UNINITIALIZED_AUTOS = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 6.0;
+				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
 				TARGETED_DEVICE_FAMILY = "1,2";
 			};

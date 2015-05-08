@@ -6,6 +6,7 @@
 //  Copyright (c) 2013 Peking University. All rights reserved.
 //
 
+#import <GLKit/GLKit.h>
 #import "GLRenderer.h"
 #include "mp_listener.h"
 
