@@ -27,6 +27,11 @@
         [[NSUserDefaults standardUserDefaults] setValue:@"0 (full speed)" forKey:@"renderFPS"];
     }
     
+    //for debug.
+    NSArray *paths = NSSearchPathForDirectoriesInDomains(NSDocumentDirectory, NSUserDomainMask, YES);
+    NSString *documentsDirectory = [paths objectAtIndex:0];
+    printf("path:%s", [documentsDirectory UTF8String]);
+    
     return YES;
 }
 
