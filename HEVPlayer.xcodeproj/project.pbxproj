@@ -301,11 +301,6 @@
 				CLASSPREFIX = HEVPlayer;
 				LastUpgradeCheck = 0630;
 				ORGANIZATIONNAME = "Peking University";
-				TargetAttributes = {
-					E871CA9516DAFE1200A6945C = {
-						DevelopmentTeam = RAE237RSGC;
-					};
-				};
 			};
 			buildConfigurationList = E871CA9016DAFE1200A6945C /* Build configuration list for PBXProject "HEVPlayer" */;
 			compatibilityVersion = "Xcode 3.2";
@@ -441,6 +436,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_BITCODE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "HEVPlayer/HEVPlayer-Prefix.pch";
 				HEADER_SEARCH_PATHS = (
@@ -453,10 +449,10 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/shengbin/projects/HEVPlayer/ffmpeg/lib,
-					/Users/shengbin/projects/HEVPlayer/lenthevcdec/lib,
-					"$(PROJECT_DIR)/ffmpeg/lib",
+					"\"$(SRCROOT)/ffmpeg/lib/\"",
+					"\"$(PROJECT_DIR)/lenthevcdec/lib/\"",
 				);
+				ONLY_ACTIVE_ARCH = NO;
 				OTHER_CFLAGS = "";
 				"OTHER_CFLAGS[arch=*]" = "";
 				PRODUCT_NAME = "$(TARGET_NAME)";
@@ -471,6 +467,7 @@
 				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
 				ASSETCATALOG_COMPILER_LAUNCHIMAGE_NAME = LaunchImage;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
+				ENABLE_BITCODE = NO;
 				GCC_PRECOMPILE_PREFIX_HEADER = YES;
 				GCC_PREFIX_HEADER = "HEVPlayer/HEVPlayer-Prefix.pch";
 				HEADER_SEARCH_PATHS = (
@@ -483,10 +480,10 @@
 				IPHONEOS_DEPLOYMENT_TARGET = 5.0;
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
-					/Users/shengbin/projects/HEVPlayer/ffmpeg/lib,
-					/Users/shengbin/projects/HEVPlayer/lenthevcdec/lib,
-					"$(PROJECT_DIR)/ffmpeg/lib",
+					"\"$(SRCROOT)/ffmpeg/lib/\"",
+					"\"$(PROJECT_DIR)/lenthevcdec/lib/\"",
 				);
+				ONLY_ACTIVE_ARCH = NO;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				VALID_ARCHS = armv7;
 				WRAPPER_EXTENSION = app;
