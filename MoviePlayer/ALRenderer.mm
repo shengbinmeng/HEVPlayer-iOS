@@ -11,13 +11,10 @@
 #import <OpenAL/alc.h>
 #import <AudioToolbox/AudioFile.h>
 #import <AudioToolbox/ExtendedAudioFile.h>
-#include "audioqueue.h"
 #include "player_utils.h"
 
 #define BUFFER_NUM 3
 #define BUFFER_SIZE (4096 * 4)
-
-AudioQueue gAudioQueue;
 
 @implementation ALRenderer
 {

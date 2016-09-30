@@ -8,9 +8,8 @@
 
 #import "MoviePlayer.h"
 #import "GLRenderer.h"
-#include "mediaplayer.h"
-#import "AudioHandler.h"
 #import "ALRenderer.h"
+#include "mediaplayer.h"
 
 GLRenderer *gGLRenderer;
 ALRenderer *gALRenderer;
