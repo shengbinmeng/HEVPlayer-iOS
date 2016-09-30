@@ -239,7 +239,11 @@ static GLfloat textureCoords[] = {
 - (void) render: (void*) data {
     
     struct VideoFrame *gVF = (struct VideoFrame*)data;
-    
+    if (gVF == NULL) {
+        LOGI("gVF == NULL \n");
+        return;
+    }
+
     if (needSetup) {
         
         [EAGLContext setCurrentContext:context];
