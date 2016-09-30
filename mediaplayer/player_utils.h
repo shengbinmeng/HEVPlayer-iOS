@@ -21,6 +21,4 @@
 #define LOGI(...) printf(__VA_ARGS__)
 #define LOGE LOGI
 
-void detachJVM();
-
 #endif
