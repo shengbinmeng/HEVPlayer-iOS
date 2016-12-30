@@ -8,7 +8,7 @@
 
 #import "MoviesViewController.h"
 #import "PlayViewController.h"
-#import "SettingsViewController.h"
+#import "MoreViewController.h"
 
 @interface MoviesViewController ()
 
@@ -28,8 +28,8 @@
 
 - (void) buttonPressed
 {
-    SettingsViewController *sv = [[SettingsViewController alloc] initWithStyle:UITableViewStyleGrouped];
-    [self.navigationController pushViewController:sv animated:YES];
+    MoreViewController *more = [[MoreViewController alloc] initWithStyle:UITableViewStyleGrouped];
+    [self.navigationController pushViewController:more animated:YES];
 }
 
 - (void)viewDidLoad
@@ -40,7 +40,7 @@
         // this is iOS 6.0 above
         [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"Cell"];
     }
-    UIBarButtonItem *button = [[UIBarButtonItem alloc] initWithTitle:@"More" style:UIBarButtonItemStyleBordered target:self action:@selector(buttonPressed)];
+    UIBarButtonItem *button = [[UIBarButtonItem alloc] initWithTitle:@"More" style:UIBarButtonItemStylePlain target:self action:@selector(buttonPressed)];
     self.navigationItem.rightBarButtonItem = button;
 }
 
