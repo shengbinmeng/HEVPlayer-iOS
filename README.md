@@ -1,12 +1,14 @@
-HEVPlayer is a High Efficiency Video Player.
+High Efficiency Video Player for iOS.
 
-## Build ffmpeg with lenthevcdec support
+# Note
 
-1. Apply doc/*.patch to ffmpeg(v2.4.4) source (`patch -p1 < *.patch`).
+Build ffmpeg with [lenthevcdec](http://www.strongene.com/cn/downloads/downloadCenter.jsp) support:
 
-2. Run doc/config-ios.sh in ffmpeg source folder to configure, then `make` and `make install`.
+1. Apply misc/*.patch to ffmpeg(v2.4.4) source (`patch -p1 < *.patch`);
 
-3. The header files and libraries are installed to the folder configured with "--prefix" and good to use.
+2. Run misc/config-ios.sh in ffmpeg source folder to configure, then `make` and `make install`;
+
+3. FFmpeg header files and libraries are then installed to the folder configured with "--prefix" and good to use.
 
 The folder hierarchy required by config-ios.sh is:
 
