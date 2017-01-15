@@ -1,37 +1,38 @@
-#include "framequeue.h"
+#include "Queue.h"
 
-#define LOG_TAG "FrameQueue"
+#define LOG_TAG "Queue"
 
-FrameQueue::FrameQueue() {
+Queue::Queue() {
 	pthread_mutex_init(&mLock, NULL);
 	pthread_cond_init(&mCondition, NULL);
 	mFirst = NULL;
 	mLast = NULL;
 	mSize = 0;
-	mAbortRequest = false;
+	mAbort = false;
 }
 
-FrameQueue::~FrameQueue() {
+Queue::~Queue() {
 	flush();
 	pthread_mutex_destroy(&mLock);
 	pthread_cond_destroy(&mCondition);
 }
 
-int FrameQueue::size() {
+int Queue::size() {
 	pthread_mutex_lock(&mLock);
 	int size = mSize;
 	pthread_mutex_unlock(&mLock);
 	return size;
 }
 
-void FrameQueue::flush() {
+void Queue::flush() {
 	pthread_mutex_lock(&mLock);
 
-	VideoFrame *vf, *vf1;
-	for (vf = mFirst; vf != NULL; vf = vf1) {
-		vf1 = vf->next;
-		free(vf->yuv_data[0]);
-		free(vf);
+	QueueItem *item = mFirst;
+	while (item != NULL) {
+		QueueItem *next = item->next;
+		free(item->data);
+		free(item);
+		item = next;
 	}
 
 	mLast = NULL;
@@ -41,17 +42,18 @@ void FrameQueue::flush() {
 	pthread_mutex_unlock(&mLock);
 }
 
-int FrameQueue::put(VideoFrame *vf) {
+int Queue::put(QueueItem *item) {
 	pthread_mutex_lock(&mLock);
 
 	if (mLast == NULL) {
-		mFirst = vf;
+		// The queue has no item. We are putting the first one.
+		mFirst = item;
 	} else {
-		mLast->next = vf;
+		mLast->next = item;
 	}
 
-	vf->next = NULL;
-	mLast = vf;
+	item->next = NULL;
+	mLast = item;
 	mSize++;
 
 	pthread_cond_signal(&mCondition);
@@ -59,44 +61,45 @@ int FrameQueue::put(VideoFrame *vf) {
 	return 0;
 }
 
-// return < 0 if aborted, 0 if got and > 0 if empty
-int FrameQueue::get(VideoFrame **vf, bool block) {
+int Queue::get(QueueItem **item, bool wait) {
 	int ret = 0;
 
 	pthread_mutex_lock(&mLock);
 
-	for (;;) {
-		if (mAbortRequest) {
+	while (1) {
+		if (mAbort) {
 			ret = -1;
 			break;
 		}
 
-		*vf = mFirst;
-		if (*vf) {
-			mFirst = (*vf)->next;
+		if (mFirst) {
+			// The queue has items.
+			*item = mFirst;
+			mFirst = mFirst->next;
 			if (mFirst == NULL) {
-				//queue empty
+				// The queue becomes empty.
 				mLast = NULL;
 			}
 			mSize--;
-			ret = 0;
-			break;
-		} else if (!block) {
-			ret = 1;
 			break;
 		} else {
-			pthread_cond_wait(&mCondition, &mLock);
+			// The queue has no item.
+			if (!wait) {
+				ret = -1;
+				break;
+			} else {
+				pthread_cond_wait(&mCondition, &mLock);
+			}
 		}
 	}
 
 	pthread_mutex_unlock(&mLock);
 	return ret;
-
 }
 
-void FrameQueue::abort() {
+void Queue::abort() {
 	pthread_mutex_lock(&mLock);
-	mAbortRequest = true;
+	mAbort = true;
 	pthread_cond_signal(&mCondition);
 	pthread_mutex_unlock(&mLock);
 }

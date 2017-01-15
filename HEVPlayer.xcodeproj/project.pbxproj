@@ -24,14 +24,14 @@
 		6C9A4D991851F4270015FB0B /* OpenGLES.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9A4D981851F4270015FB0B /* OpenGLES.framework */; };
 		6C9A4DA51851F4640015FB0B /* libiconv.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9A4DA41851F4640015FB0B /* libiconv.dylib */; };
 		6C9A4DA71851F4FA0015FB0B /* liblenthevcdec.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 6C9A4DA61851F4FA0015FB0B /* liblenthevcdec.a */; };
-		6CE3B04C18D2D6A200C65F26 /* audio_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B03D18D2D6A200C65F26 /* audio_decoder.cpp */; };
-		6CE3B04D18D2D6A200C65F26 /* decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B03F18D2D6A200C65F26 /* decoder.cpp */; };
-		6CE3B04E18D2D6A200C65F26 /* framequeue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B04118D2D6A200C65F26 /* framequeue.cpp */; };
-		6CE3B04F18D2D6A200C65F26 /* mediaplayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B04318D2D6A200C65F26 /* mediaplayer.cpp */; };
-		6CE3B05018D2D6A200C65F26 /* packetqueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B04518D2D6A200C65F26 /* packetqueue.cpp */; };
-		6CE3B05118D2D6A200C65F26 /* thread.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B04818D2D6A200C65F26 /* thread.cpp */; };
-		6CE3B05218D2D6A200C65F26 /* video_decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B04A18D2D6A200C65F26 /* video_decoder.cpp */; };
-		6CE3B05518D2D7AD00C65F26 /* mp_listener.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B05318D2D7AD00C65F26 /* mp_listener.mm */; };
+		6CDE7BEC1E179A2A0008FE50 /* AudioDecoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CDE7BDB1E179A2A0008FE50 /* AudioDecoder.cpp */; };
+		6CDE7BED1E179A2A0008FE50 /* Decoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CDE7BDD1E179A2A0008FE50 /* Decoder.cpp */; };
+		6CDE7BEE1E179A2A0008FE50 /* FrameQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CDE7BDF1E179A2A0008FE50 /* FrameQueue.cpp */; };
+		6CDE7BEF1E179A2A0008FE50 /* MediaPlayer.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CDE7BE11E179A2A0008FE50 /* MediaPlayer.cpp */; };
+		6CDE7BF01E179A2A0008FE50 /* PacketQueue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CDE7BE31E179A2A0008FE50 /* PacketQueue.cpp */; };
+		6CDE7BF11E179A2A0008FE50 /* Queue.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CDE7BE51E179A2A0008FE50 /* Queue.cpp */; };
+		6CDE7BF31E179A2A0008FE50 /* VideoDecoder.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 6CDE7BE91E179A2A0008FE50 /* VideoDecoder.cpp */; };
+		6CE3B05518D2D7AD00C65F26 /* PlayerListener.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B05318D2D7AD00C65F26 /* PlayerListener.mm */; };
 		6CE3B06918D2DD2B00C65F26 /* GLRenderer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B06418D2DD2B00C65F26 /* GLRenderer.mm */; };
 		6CE3B06A18D2DD2B00C65F26 /* GLView.m in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B06618D2DD2B00C65F26 /* GLView.m */; };
 		6CE3B06B18D2DD2B00C65F26 /* MoviePlayer.mm in Sources */ = {isa = PBXBuildFile; fileRef = 6CE3B06818D2DD2B00C65F26 /* MoviePlayer.mm */; };
@@ -69,23 +69,23 @@
 		6C9A4D981851F4270015FB0B /* OpenGLES.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGLES.framework; path = System/Library/Frameworks/OpenGLES.framework; sourceTree = SDKROOT; };
 		6C9A4DA41851F4640015FB0B /* libiconv.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libiconv.dylib; path = usr/lib/libiconv.dylib; sourceTree = SDKROOT; };
 		6C9A4DA61851F4FA0015FB0B /* liblenthevcdec.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = liblenthevcdec.a; path = lenthevcdec/lib/liblenthevcdec.a; sourceTree = "<group>"; };
-		6CE3B03D18D2D6A200C65F26 /* audio_decoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = audio_decoder.cpp; sourceTree = "<group>"; };
-		6CE3B03E18D2D6A200C65F26 /* audio_decoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = audio_decoder.h; sourceTree = "<group>"; };
-		6CE3B03F18D2D6A200C65F26 /* decoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = decoder.cpp; sourceTree = "<group>"; };
-		6CE3B04018D2D6A200C65F26 /* decoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = decoder.h; sourceTree = "<group>"; };
-		6CE3B04118D2D6A200C65F26 /* framequeue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = framequeue.cpp; sourceTree = "<group>"; };
-		6CE3B04218D2D6A200C65F26 /* framequeue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = framequeue.h; sourceTree = "<group>"; };
-		6CE3B04318D2D6A200C65F26 /* mediaplayer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = mediaplayer.cpp; sourceTree = "<group>"; };
-		6CE3B04418D2D6A200C65F26 /* mediaplayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mediaplayer.h; sourceTree = "<group>"; };
-		6CE3B04518D2D6A200C65F26 /* packetqueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = packetqueue.cpp; sourceTree = "<group>"; };
-		6CE3B04618D2D6A200C65F26 /* packetqueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = packetqueue.h; sourceTree = "<group>"; };
-		6CE3B04718D2D6A200C65F26 /* player_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = player_utils.h; sourceTree = "<group>"; };
-		6CE3B04818D2D6A200C65F26 /* thread.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = thread.cpp; sourceTree = "<group>"; };
-		6CE3B04918D2D6A200C65F26 /* thread.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = thread.h; sourceTree = "<group>"; };
-		6CE3B04A18D2D6A200C65F26 /* video_decoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = video_decoder.cpp; sourceTree = "<group>"; };
-		6CE3B04B18D2D6A200C65F26 /* video_decoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = video_decoder.h; sourceTree = "<group>"; };
-		6CE3B05318D2D7AD00C65F26 /* mp_listener.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = mp_listener.mm; sourceTree = "<group>"; };
-		6CE3B05418D2D7AD00C65F26 /* mp_listener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = mp_listener.h; sourceTree = "<group>"; };
+		6CDE7BDB1E179A2A0008FE50 /* AudioDecoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = AudioDecoder.cpp; sourceTree = "<group>"; };
+		6CDE7BDC1E179A2A0008FE50 /* AudioDecoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = AudioDecoder.h; sourceTree = "<group>"; };
+		6CDE7BDD1E179A2A0008FE50 /* Decoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Decoder.cpp; sourceTree = "<group>"; };
+		6CDE7BDE1E179A2A0008FE50 /* Decoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Decoder.h; sourceTree = "<group>"; };
+		6CDE7BDF1E179A2A0008FE50 /* FrameQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = FrameQueue.cpp; sourceTree = "<group>"; };
+		6CDE7BE01E179A2A0008FE50 /* FrameQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = FrameQueue.h; sourceTree = "<group>"; };
+		6CDE7BE11E179A2A0008FE50 /* MediaPlayer.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = MediaPlayer.cpp; sourceTree = "<group>"; };
+		6CDE7BE21E179A2A0008FE50 /* MediaPlayer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = MediaPlayer.h; sourceTree = "<group>"; };
+		6CDE7BE31E179A2A0008FE50 /* PacketQueue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = PacketQueue.cpp; sourceTree = "<group>"; };
+		6CDE7BE41E179A2A0008FE50 /* PacketQueue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PacketQueue.h; sourceTree = "<group>"; };
+		6CDE7BE51E179A2A0008FE50 /* Queue.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = Queue.cpp; sourceTree = "<group>"; };
+		6CDE7BE61E179A2A0008FE50 /* Queue.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = Queue.h; sourceTree = "<group>"; };
+		6CDE7BE91E179A2A0008FE50 /* VideoDecoder.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = VideoDecoder.cpp; sourceTree = "<group>"; };
+		6CDE7BEA1E179A2A0008FE50 /* VideoDecoder.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = VideoDecoder.h; sourceTree = "<group>"; };
+		6CDE7BEB1E179A2A0008FE50 /* player_utils.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = player_utils.h; sourceTree = "<group>"; };
+		6CE3B05318D2D7AD00C65F26 /* PlayerListener.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = PlayerListener.mm; sourceTree = "<group>"; };
+		6CE3B05418D2D7AD00C65F26 /* PlayerListener.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = PlayerListener.h; sourceTree = "<group>"; };
 		6CE3B06318D2DD2B00C65F26 /* GLRenderer.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLRenderer.h; sourceTree = "<group>"; };
 		6CE3B06418D2DD2B00C65F26 /* GLRenderer.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = GLRenderer.mm; sourceTree = "<group>"; };
 		6CE3B06518D2DD2B00C65F26 /* GLView.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = GLView.h; sourceTree = "<group>"; };
@@ -151,23 +151,23 @@
 		6CE3B03C18D2D6A200C65F26 /* mediaplayer */ = {
 			isa = PBXGroup;
 			children = (
-				6CE3B05318D2D7AD00C65F26 /* mp_listener.mm */,
-				6CE3B05418D2D7AD00C65F26 /* mp_listener.h */,
-				6CE3B03D18D2D6A200C65F26 /* audio_decoder.cpp */,
-				6CE3B03E18D2D6A200C65F26 /* audio_decoder.h */,
-				6CE3B03F18D2D6A200C65F26 /* decoder.cpp */,
-				6CE3B04018D2D6A200C65F26 /* decoder.h */,
-				6CE3B04118D2D6A200C65F26 /* framequeue.cpp */,
-				6CE3B04218D2D6A200C65F26 /* framequeue.h */,
-				6CE3B04318D2D6A200C65F26 /* mediaplayer.cpp */,
-				6CE3B04418D2D6A200C65F26 /* mediaplayer.h */,
-				6CE3B04518D2D6A200C65F26 /* packetqueue.cpp */,
-				6CE3B04618D2D6A200C65F26 /* packetqueue.h */,
-				6CE3B04718D2D6A200C65F26 /* player_utils.h */,
-				6CE3B04818D2D6A200C65F26 /* thread.cpp */,
-				6CE3B04918D2D6A200C65F26 /* thread.h */,
-				6CE3B04A18D2D6A200C65F26 /* video_decoder.cpp */,
-				6CE3B04B18D2D6A200C65F26 /* video_decoder.h */,
+				6CDE7BDB1E179A2A0008FE50 /* AudioDecoder.cpp */,
+				6CDE7BDC1E179A2A0008FE50 /* AudioDecoder.h */,
+				6CDE7BDD1E179A2A0008FE50 /* Decoder.cpp */,
+				6CDE7BDE1E179A2A0008FE50 /* Decoder.h */,
+				6CDE7BDF1E179A2A0008FE50 /* FrameQueue.cpp */,
+				6CDE7BE01E179A2A0008FE50 /* FrameQueue.h */,
+				6CDE7BE11E179A2A0008FE50 /* MediaPlayer.cpp */,
+				6CDE7BE21E179A2A0008FE50 /* MediaPlayer.h */,
+				6CDE7BE31E179A2A0008FE50 /* PacketQueue.cpp */,
+				6CDE7BE41E179A2A0008FE50 /* PacketQueue.h */,
+				6CDE7BEB1E179A2A0008FE50 /* player_utils.h */,
+				6CE3B05418D2D7AD00C65F26 /* PlayerListener.h */,
+				6CE3B05318D2D7AD00C65F26 /* PlayerListener.mm */,
+				6CDE7BE51E179A2A0008FE50 /* Queue.cpp */,
+				6CDE7BE61E179A2A0008FE50 /* Queue.h */,
+				6CDE7BE91E179A2A0008FE50 /* VideoDecoder.cpp */,
+				6CDE7BEA1E179A2A0008FE50 /* VideoDecoder.h */,
 			);
 			path = mediaplayer;
 			sourceTree = "<group>";
@@ -327,23 +327,23 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				6CE3B05218D2D6A200C65F26 /* video_decoder.cpp in Sources */,
 				6CE3B06A18D2DD2B00C65F26 /* GLView.m in Sources */,
-				6CE3B05518D2D7AD00C65F26 /* mp_listener.mm in Sources */,
+				6CE3B05518D2D7AD00C65F26 /* PlayerListener.mm in Sources */,
+				6CDE7BF31E179A2A0008FE50 /* VideoDecoder.cpp in Sources */,
+				6CDE7BED1E179A2A0008FE50 /* Decoder.cpp in Sources */,
+				6CDE7BEF1E179A2A0008FE50 /* MediaPlayer.cpp in Sources */,
 				E871CAA716DAFE1200A6945C /* main.m in Sources */,
-				6CE3B04D18D2D6A200C65F26 /* decoder.cpp in Sources */,
-				6CE3B05118D2D6A200C65F26 /* thread.cpp in Sources */,
-				6CE3B05018D2D6A200C65F26 /* packetqueue.cpp in Sources */,
 				6C9A4D861851F20B0015FB0B /* HEVPlayerAppDelegate.m in Sources */,
 				E871CACE16DB0BCE00A6945C /* PlayViewController.m in Sources */,
+				6CDE7BEE1E179A2A0008FE50 /* FrameQueue.cpp in Sources */,
 				6CE3B06B18D2DD2B00C65F26 /* MoviePlayer.mm in Sources */,
-				6CE3B04F18D2D6A200C65F26 /* mediaplayer.cpp in Sources */,
 				6C158F841906836E00FB0960 /* ALRenderer.mm in Sources */,
-				6CE3B04E18D2D6A200C65F26 /* framequeue.cpp in Sources */,
+				6CDE7BEC1E179A2A0008FE50 /* AudioDecoder.cpp in Sources */,
 				6C9A4D881851F20B0015FB0B /* MoviesViewController.m in Sources */,
 				6C9A4D891851F20B0015FB0B /* MoreViewController.m in Sources */,
-				6CE3B04C18D2D6A200C65F26 /* audio_decoder.cpp in Sources */,
 				6CE3B06918D2DD2B00C65F26 /* GLRenderer.mm in Sources */,
+				6CDE7BF01E179A2A0008FE50 /* PacketQueue.cpp in Sources */,
+				6CDE7BF11E179A2A0008FE50 /* Queue.cpp in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

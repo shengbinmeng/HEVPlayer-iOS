@@ -8,7 +8,7 @@
 
 #import <GLKit/GLKit.h>
 #import "GLRenderer.h"
-#include "mp_listener.h"
+#include "PlayerListener.h"
 
 extern struct VideoFrame* gVF;
 

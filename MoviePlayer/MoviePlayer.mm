@@ -9,7 +9,8 @@
 #import "MoviePlayer.h"
 #import "GLRenderer.h"
 #import "ALRenderer.h"
-#include "mediaplayer.h"
+#include "MediaPlayer.h"
+#include "PlayerListener.h"
 
 GLRenderer *gGLRenderer;
 ALRenderer *gALRenderer;
@@ -24,8 +25,8 @@ ALRenderer *gALRenderer;
     self = [super init];
     
     MediaPlayer *mp = new MediaPlayer();
-    MediaPlayerListener* listener = new MediaPlayerListener();
-	mp->setListener(listener);
+    PlayerListener* listener = new PlayerListener();
+    mp->setListener(listener);
     _mediaPlayer = mp;
     return self;
 }
