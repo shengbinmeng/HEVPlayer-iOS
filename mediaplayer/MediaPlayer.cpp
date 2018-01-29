@@ -12,7 +12,7 @@ extern "C" {
 #define LOG_TAG "MediaPlayer"
 
 #define USE_LENTHEVCDEC 0
-#define USE_QY265DEC 1
+#define USE_QY265DEC 0
 
 #define MAX_AP_QUEUE_SIZE (2 * 128)
 #define MAX_VP_QUEUE_SIZE (2 * 128)
