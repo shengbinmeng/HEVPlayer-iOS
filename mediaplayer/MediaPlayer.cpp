@@ -12,6 +12,7 @@ extern "C" {
 #define LOG_TAG "MediaPlayer"
 
 #define USE_LENTHEVCDEC 0
+#define USE_QY265DEC 1
 
 #define MAX_AP_QUEUE_SIZE (2 * 128)
 #define MAX_VP_QUEUE_SIZE (2 * 128)
@@ -167,6 +168,17 @@ int MediaPlayer::prepareVideo() {
         }
 	}
 #endif
+#if USE_QY265DEC
+    if (codec->id == AV_CODEC_ID_HEVC) {
+        AVCodec* qy265_dec = avcodec_find_decoder_by_name("libqy265dec");
+        if (qy265_dec != NULL) {
+            codec = qy265_dec;
+            LOGI("use qy265dec for HEVC decoding\n");
+        } else {
+            LOGE("find qy265dec failed\n");
+        }
+    }
+#endif
 	if (codec == NULL) {
 		LOGE("find video decoder failed\n");
 		return -1;
@@ -210,6 +222,20 @@ int MediaPlayer::open(char* file) {
                 LOGI("use lenthevcdec to find stream info\n");
             } else {
                 LOGE("find lenthevcdec failed\n");
+            }
+        }
+    }
+#endif
+#if USE_QY265DEC
+    // for HEVC video, we should use qy265 decoder to find stream info
+    if (mFormatContext->streams[AVMEDIA_TYPE_VIDEO]) {
+        if (mFormatContext->streams[AVMEDIA_TYPE_VIDEO]->codec->codec_id == AV_CODEC_ID_HEVC) {
+            AVCodec* qy265_dec = avcodec_find_decoder_by_name("libqy265dec");
+            if (qy265_dec != NULL) {
+                mFormatContext->streams[AVMEDIA_TYPE_VIDEO]->codec->codec = qy265_dec;
+                LOGI("use qy265dec to find stream info\n");
+            } else {
+                LOGE("find qy265dec failed\n");
             }
         }
     }
