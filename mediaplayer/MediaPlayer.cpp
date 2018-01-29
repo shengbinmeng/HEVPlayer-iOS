@@ -157,10 +157,14 @@ int MediaPlayer::prepareVideo() {
 	// find and open video decoder
 	AVCodec* codec = avcodec_find_decoder(codec_ctx->codec_id);
 #if USE_LENTHEVCDEC
-	AVCodec* lenthevc_dec = avcodec_find_decoder_by_name("liblenthevc");
-	if (codec->id == lenthevc_dec->id) {
-		codec = lenthevc_dec;
-		LOGI("use lenthevcdec for HEVC decoding\n");
+	if (codec->id == AV_CODEC_ID_HEVC) {
+        AVCodec* lenthevc_dec = avcodec_find_decoder_by_name("liblenthevc");
+        if (lenthevc_dec != NULL) {
+		    codec = lenthevc_dec;
+		    LOGI("use lenthevcdec for HEVC decoding\n");
+        } else {
+            LOGE("find lenthevcdec failed\n");
+        }
 	}
 #endif
 	if (codec == NULL) {
@@ -198,13 +202,17 @@ int MediaPlayer::open(char* file) {
 	// retrieve stream information
 #if USE_LENTHEVCDEC
 	// for HEVC video, we should use lenthevc decoder to find stream info
-	if (mFormatContext->streams[AVMEDIA_TYPE_VIDEO]) {
-		AVCodec* lenthevc_dec = avcodec_find_decoder_by_name("liblenthevc");
-		AVCodec* codec = avcodec_find_decoder(mFormatContext->streams[AVMEDIA_TYPE_VIDEO]->codec->codec_id);
-		if (codec == NULL || codec->id == lenthevc_dec->id) {
-			mFormatContext->streams[AVMEDIA_TYPE_VIDEO]->codec->codec = lenthevc_dec;
-		}
-	}
+    if (mFormatContext->streams[AVMEDIA_TYPE_VIDEO]) {
+        if (mFormatContext->streams[AVMEDIA_TYPE_VIDEO]->codec->codec_id == AV_CODEC_ID_HEVC) {
+            AVCodec* lenthevc_dec = avcodec_find_decoder_by_name("lenthevcdec");
+            if (lenthevc_dec != NULL) {
+                mFormatContext->streams[AVMEDIA_TYPE_VIDEO]->codec->codec = lenthevc_dec;
+                LOGI("use lenthevcdec to find stream info\n");
+            } else {
+                LOGE("find lenthevcdec failed\n");
+            }
+        }
+    }
 #endif
 	if (avformat_find_stream_info(mFormatContext, NULL) < 0) {
 		LOGE("av_find_stream_info failed\n");
