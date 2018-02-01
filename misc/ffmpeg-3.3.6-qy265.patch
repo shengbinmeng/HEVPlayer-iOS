@@ -1,0 +1,1425 @@
+diff --git a/libavcodec/Makefile b/libavcodec/Makefile
+index f0cba88..946cb2c 100644
+--- a/libavcodec/Makefile
++++ b/libavcodec/Makefile
+@@ -928,6 +928,8 @@ OBJS-$(CONFIG_LIBX265_ENCODER)            += libx265.o
+ OBJS-$(CONFIG_LIBXAVS_ENCODER)            += libxavs.o
+ OBJS-$(CONFIG_LIBXVID_ENCODER)            += libxvid.o
+ OBJS-$(CONFIG_LIBZVBI_TELETEXT_DECODER)   += libzvbi-teletextdec.o ass.o
++OBJS-$(CONFIG_LIBQY265_ENCODER)           += libqy265enc.o
++OBJS-$(CONFIG_LIBQY265_DECODER)           += libqy265dec.o
+ 
+ # parsers
+ OBJS-$(CONFIG_AAC_LATM_PARSER)         += latm_parser.o
+diff --git a/libavcodec/allcodecs.c b/libavcodec/allcodecs.c
+index 54a9e8c..ae5fd81 100644
+--- a/libavcodec/allcodecs.c
++++ b/libavcodec/allcodecs.c
+@@ -723,6 +723,7 @@ static void register_all(void)
+     REGISTER_PARSER(VP8,                vp8);
+     REGISTER_PARSER(VP9,                vp9);
+     REGISTER_PARSER(XMA,                xma);
++    REGISTER_ENCDEC(LIBQY265,           libqy265);
+ }
+ 
+ void avcodec_register_all(void)
+diff --git a/libavcodec/libqy265dec.c b/libavcodec/libqy265dec.c
+new file mode 100644
+index 0000000..ebe4720
+--- /dev/null
++++ b/libavcodec/libqy265dec.c
+@@ -0,0 +1,383 @@
++/*
++ * HEVC video Decoder from qianyi
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#include "libavutil/atomic.h"
++#include "libavutil/attributes.h"
++#include "libavutil/common.h"
++#include "libavutil/display.h"
++#include "libavutil/internal.h"
++#include "libavutil/md5.h"
++#include "libavutil/opt.h"
++#include "libavutil/pixdesc.h"
++#include "libavutil/stereo3d.h"
++
++#include "bswapdsp.h"
++#include "bytestream.h"
++#include "cabac_functions.h"
++#include "golomb.h"
++
++#ifndef WIN32
++#include <unistd.h>
++#include <pthread.h>
++#include <semaphore.h>
++#include <dlfcn.h>
++#endif
++
++#include "hevc.h"
++
++
++#include "libavutil/buffer.h"
++
++#include "avcodec.h"
++#include "bswapdsp.h"
++#include "get_bits.h"
++#include "internal.h"
++#include "thread.h"
++#include "videodsp.h"
++#include "qy265dec.h"
++#include "qyauth_env.h"
++
++#define _AVOID_FRAME_COPY_ 0
++
++typedef struct  QY265Context {
++
++    const AVClass *c;  // needed by private avoptions
++    uint32_t m_uiFrameCount;
++    int32_t m_iPicWidth;
++    int32_t m_iPicHeight;
++    int32_t m_iFrameCntSeq; //for one seq
++    int32_t m_iMaxPicSize;
++
++    void* m_decoder;
++
++    uint8_t is_nalff;       ///< this flag is != 0 if bitstream is encapsulated
++                            ///< as a format defined in 14496-15
++    int  qydec_threads;      ///< decoder threads
++    char *license_file;
++
++    AVCodecContext *avctx;
++    int nal_length_size;    ///< Number of bytes used for nal length (1, 2 or 4)
++    QY265DecConfig* params;
++
++    uint8_t             threads_type;
++    uint8_t             threads_number;
++    AVFrame * m_pOutputFrame;
++    QY265Frame m_qyDecFrame;
++} QY265Context ;
++
++#define QYVIDEO_ENABLE_LOGO_FLAG 0x1000
++
++static int hevc_decode_frame(AVCodecContext *avctx, void *data, int *got_output,
++                             AVPacket *avpkt)
++{
++    int ret, enableLogo = 0;
++    QY265Context *s = avctx->priv_data;
++#if _AVOID_FRAME_COPY_
++    //if got valid output frame last time, return frame to decoder
++    //ffmpeg decode once and then display once, valid output last time has been sent to display
++    if (s->m_qyDecFrame.bValid == 1) {
++        QY265DecoderReturnDecodedFrame(s->m_decoder, &s->m_qyDecFrame);
++    }
++    s->m_qyDecFrame.bValid = 0;
++#endif
++    AVFrame * pOutFrame = data;
++    if ( avpkt && avpkt->flags == AV_PKT_FLAG_CORRUPT ) {
++        QY265DecodeFlush( s->m_decoder, 1, &ret );
++        return 0;
++    }
++
++    if((avpkt->flags & QYVIDEO_ENABLE_LOGO_FLAG) != 0)
++        enableLogo = 1;
++
++    uint8_t * packet_buf= avpkt->data;
++    int32_t packet_size = avpkt->size;
++    while ( packet_size > 0) {
++        int32_t i, nal_length = 0;
++        if( s->is_nalff ) {
++            // parse nal_length at the begin
++            for(i = 0; i < s->nal_length_size; i++) {
++                nal_length = (nal_length << 8) | packet_buf[i];
++            }
++            if (nal_length == 1) { // length = [0,0,0,1], should be start code
++                s->is_nalff = 0;
++                av_log(avctx, AV_LOG_ERROR, "length = 1, try startcode");
++                continue;
++            }
++            if ( nal_length <= 0 ) {
++                av_log(avctx, AV_LOG_ERROR, "pkg incomplete");
++                return -1;
++            }
++            // skip nal_length
++            packet_buf += s->nal_length_size;
++            packet_size -= s->nal_length_size;
++            if ( packet_size < nal_length ) {
++                av_log(avctx, AV_LOG_ERROR, "pkg incomplete");
++                break;
++            }
++        }
++        else {
++            // raw bitstream
++            nal_length = packet_size;
++        }
++        int64_t pts = avpkt->pts == AV_NOPTS_VALUE  ? avpkt->dts : avpkt->pts;
++        QY265DecodeFrame( s->m_decoder, packet_buf, nal_length, &ret, pts);
++        packet_buf += nal_length;
++        packet_size -= nal_length;
++        if ( ret < 0) {
++            av_log(avctx, AV_LOG_ERROR, "dec err(%x) %d\n", ret, nal_length);
++        }
++    }
++    if ( avpkt && avpkt->size == 0 ) {
++        QY265DecodeFlush( s->m_decoder, 0, &ret );
++    }
++    QY265DecoderGetDecodedFrame( s->m_decoder, &s->m_qyDecFrame, &ret, enableLogo);
++    if (ret < 0 ){
++        av_log(avctx, AV_LOG_ERROR, "get frame err(%x) %d\n", ret);
++        return -1;
++    }
++    if (s->m_qyDecFrame.bValid == 0) {
++        return 0;
++    }
++    *pOutFrame = *s->m_pOutputFrame;
++    pOutFrame->format = AV_PIX_FMT_YUV420P;
++    pOutFrame->width  = s->m_qyDecFrame.frameinfo.nWidth;
++    pOutFrame->height = s->m_qyDecFrame.frameinfo.nHeight;
++
++    avctx->sample_fmt = AV_PIX_FMT_YUV420P;
++    avctx->width  = avctx->coded_width  = s->m_qyDecFrame.frameinfo.nWidth;
++    avctx->height = avctx->coded_height = s->m_qyDecFrame.frameinfo.nHeight;
++#if _AVOID_FRAME_COPY_
++    for( int i = 0; i < 3; i++) {
++        pOutFrame->data[i] = s->m_qyDecFrame.pData[i];
++        pOutFrame->extended_data = pOutFrame->data;
++        pOutFrame->linesize[i] = s->m_qyDecFrame.iStride[i];
++    }
++#else
++    av_frame_get_buffer(pOutFrame, 8 );
++
++    for( int i = 0; i < 3; i++) {
++        int height = s->m_qyDecFrame.frameinfo.nHeight / (i==0?1:2);
++        int width  = s->m_qyDecFrame.frameinfo.nWidth  / (i==0?1:2);
++        uint8_t *pDst = pOutFrame->data[i];
++        uint8_t *pSrc = s->m_qyDecFrame.pData[i];
++        int iDstride  = pOutFrame->linesize[i];
++        int iSstride  = s->m_qyDecFrame.iStride[i];
++        for( int j = 0; j < height; j++ ) {
++            memcpy( pDst, pSrc,  width);
++            pDst += iDstride;
++            pSrc += iSstride;
++        }
++    }
++#endif
++    pOutFrame->pkt_pts =
++    pOutFrame->pts = s->m_qyDecFrame.frameinfo.pts;
++#if !_AVOID_FRAME_COPY_
++    QY265DecoderReturnDecodedFrame(s->m_decoder, &s->m_qyDecFrame);
++#endif
++    *got_output = 1;
++    s->m_uiFrameCount += 1;
++    return avpkt->size;
++}
++
++static av_cold int hevc_decode_free(AVCodecContext *avctx)
++{
++    QY265Context       *s = avctx->priv_data;
++    if ( s->m_decoder )
++        QY265DecoderDestroy(s->m_decoder);
++    av_frame_free(&s->m_pOutputFrame);
++    av_free(s->params);
++    return 0;
++}
++
++static av_cold int qy265_init_context(AVCodecContext *avctx) {
++    QY265Context *s = avctx->priv_data;
++
++    s->avctx = avctx;
++    s->m_pOutputFrame = av_frame_alloc();
++    if ( !s->m_pOutputFrame) {
++         hevc_decode_free(avctx);
++         return AVERROR(ENOMEM);
++    }
++    avctx->pix_fmt = AV_PIX_FMT_YUV420P;
++    avctx->color_primaries = AVCOL_PRI_UNSPECIFIED;
++    avctx->color_trc       = AVCOL_TRC_UNSPECIFIED;
++    avctx->colorspace      = AVCOL_SPC_UNSPECIFIED;
++    avctx->sample_aspect_ratio.num = 1;
++    avctx->sample_aspect_ratio.den = 1;
++    avctx->color_range = AVCOL_RANGE_MPEG;
++
++    s->m_qyDecFrame.bValid = 0;
++
++    return 0;
++}
++
++static int qy265_decode_extradata(QY265Context *s)
++{
++    AVCodecContext *avctx = s->avctx;
++    GetByteContext gb;
++    int ret;
++
++    bytestream2_init(&gb, avctx->extradata, avctx->extradata_size);
++
++    if (avctx->extradata_size > 3 &&
++        (avctx->extradata[0] ||
++         avctx->extradata[1] ||
++         avctx->extradata[2] > 1)) {
++        int i, j, num_arrays, nal_len_size;
++        s->is_nalff = 1;
++
++        bytestream2_skip(&gb, 21);
++        nal_len_size = (bytestream2_get_byte(&gb) & 3) + 1;
++        num_arrays   = bytestream2_get_byte(&gb);
++
++        /* nal units in the hvcC always have length coded with 2 bytes,
++         * so put a fake nal_length_size = 2 while parsing them */
++        s->nal_length_size = 2;
++
++        /* Decode nal units from hvcC. */
++        for (i = 0; i < num_arrays; i++) {
++            int type = bytestream2_get_byte(&gb) & 0x3f;
++            int cnt  = bytestream2_get_be16(&gb);
++            for (j = 0; j < cnt; j++) {
++                // +2 for the nal size field
++                int nalsize = bytestream2_get_be16(&gb);
++                if (bytestream2_get_bytes_left(&gb) < nalsize) {
++                    av_log(s->avctx, AV_LOG_ERROR,
++                           "Invalid NAL unit size in extradata.\n");
++                    return AVERROR_INVALIDDATA;
++                }
++                QY265DecodeFrame( s->m_decoder, gb.buffer, nalsize, &ret, 0);
++                if (ret < 0) {
++                    av_log(avctx, AV_LOG_ERROR,
++                           "Decoding extradata %d %d from hvcC failed %x\n",
++                           type, i, ret);
++                    return ret;
++                }
++                bytestream2_skip(&gb, nalsize);
++            }
++        }
++        s->nal_length_size = nal_len_size;
++    } else if ( avctx->extradata_size > 3 ) {
++        s->is_nalff = 0;
++        QY265DecodeFrame( s->m_decoder, avctx->extradata, avctx->extradata_size, &ret, 0);
++        if (ret < 0)
++            return ret;
++    }
++    else {
++        s->is_nalff = 1;
++        s->nal_length_size = 4;
++    }
++    return 0;
++}
++
++static av_cold int hevc_decode_init(AVCodecContext *avctx) {
++    QY265Context *ctx = avctx->priv_data;
++    avctx->internal->allocate_progress = 1;
++    int  ret = qy265_init_context(avctx);
++    if (ret < 0)
++        return ret;
++
++   ctx->params = (QY265DecConfig*)(av_malloc(sizeof(QY265DecConfig)));
++    if (!ctx->params) {
++        av_log(avctx, AV_LOG_ERROR, "Could not allocate qy265 param structure.\n");
++        return AVERROR(ENOMEM);
++    }
++
++
++    if (ctx->qydec_threads < 0) {
++        ctx->params->threads = avctx->thread_count; // auto set to core number by decoder
++    }
++    else {
++        ctx->params->threads = ctx->qydec_threads;
++    }
++    ctx->params->bEnableOutputRecToFile = 0;
++    ctx->params->strRecYuvFileName = NULL;
++    ctx->params->logLevel = 0;
++#if KSAUTH_PRIVATE_AUTH
++    ctx->params->pAuth = (void*)(ctx->license_file);
++    av_log(avctx, AV_LOG_INFO, "QY265Config local license file : %s \n", ctx->license_file);
++#else
++    ctx->params->pAuth = avctx->opaque;
++#endif
++    av_log(avctx, AV_LOG_INFO, "dec thread: %d [%d %d]\n",ctx->params->threads, ctx->qydec_threads,avctx->thread_count );
++    int errCode = 0;
++    ctx->m_decoder = QY265DecoderCreate(ctx->params, &errCode);
++    if (!ctx->m_decoder) {
++        av_log(avctx, AV_LOG_ERROR, "Cannot open libqy265 decoder. %d\n", errCode);
++        hevc_decode_free(avctx);
++        return AVERROR_INVALIDDATA;
++    }
++    ctx->is_nalff = 1;
++    ctx->nal_length_size = 4;
++    if (avctx->extradata_size > 0 && avctx->extradata) {
++        ret = qy265_decode_extradata(ctx);
++        if (ret < 0) {
++            hevc_decode_free(avctx);
++            return ret;
++        }
++    }
++    return ret;
++}
++
++static void hevc_decode_flush(AVCodecContext *avctx)
++{
++    QY265Context *s = avctx->priv_data;
++    int decStat_ret;
++    QY265DecodeFlush(s->m_decoder, 1, &decStat_ret);
++}
++
++#define OFFSET(x) offsetof(QY265Context, x)
++#define PAR (AV_OPT_FLAG_DECODING_PARAM | AV_OPT_FLAG_VIDEO_PARAM)
++#define VD AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_DECODING_PARAM
++
++static const AVProfile profiles[] = {
++    { FF_PROFILE_HEVC_MAIN,                 "Main"                },
++    { FF_PROFILE_UNKNOWN },
++};
++
++static const AVOption options[] = {
++    { "qylf", "set the qy265 local License file path parameter",                              OFFSET(license_file),      AV_OPT_TYPE_STRING, { 0 }, 0, 0, VD },
++    { "qydec_threads", "threads pass to decoder(0:auto, should less than cpu core count)", OFFSET(qydec_threads),
++        AV_OPT_TYPE_INT, {.i64 = 0}, 0, 128, PAR },
++    { NULL },
++};
++
++static const AVClass qy265_decoder_class = {
++    .class_name = "qy265 Decoder",
++    .item_name  = av_default_item_name,
++    .option     = options,
++    .version    = LIBAVUTIL_VERSION_INT,
++};
++
++AVCodec ff_libqy265_decoder = {
++    .name                  = "libqy265dec",
++    .long_name             = NULL_IF_CONFIG_SMALL("hevc(h.265) qy265 decoder"),
++    .type                  = AVMEDIA_TYPE_VIDEO,
++    .id                    = AV_CODEC_ID_HEVC,
++    .priv_data_size        = sizeof(QY265Context),
++    .priv_class            = &qy265_decoder_class,
++    .init                  = hevc_decode_init,
++    .close                 = hevc_decode_free,
++    .decode                = hevc_decode_frame,
++    .flush                 = hevc_decode_flush,
++    .capabilities          = CODEC_CAP_DR1 | CODEC_CAP_DELAY,
++    .profiles              = NULL_IF_CONFIG_SMALL(profiles),
++};
++
+diff --git a/libavcodec/libqy265enc.c b/libavcodec/libqy265enc.c
+new file mode 100644
+index 0000000..5f42a22
+--- /dev/null
++++ b/libavcodec/libqy265enc.c
+@@ -0,0 +1,452 @@
++/*
++ * libqy265 encoder
++ *
++ * Copyright (c) 2013-2014 Derek Buitenhuis
++ *
++ * This file is part of FFmpeg.
++ *
++ * FFmpeg is free software; you can redistribute it and/or
++ * modify it under the terms of the GNU Lesser General Public
++ * License as published by the Free Software Foundation; either
++ * version 2.1 of the License, or (at your option) any later version.
++ *
++ * FFmpeg is distributed in the hope that it will be useful,
++ * but WITHOUT ANY WARRANTY; without even the implied warranty of
++ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++ * Lesser General Public License for more details.
++ *
++ * You should have received a copy of the GNU Lesser General Public
++ * License along with FFmpeg; if not, write to the Free Software
++ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
++ */
++
++#if defined(_MSC_VER)
++#define QY265_API_IMPORTS 1
++#endif
++#if KS_QY265
++#include "qy265enc_ksc.h"
++#else
++#include "qy265enc.h"
++#endif
++
++
++#include "libavutil/internal.h"
++#include "libavutil/common.h"
++#include "libavutil/opt.h"
++#include "libavutil/pixdesc.h"
++#include "avcodec.h"
++#include "internal.h"
++#include "qyauth_env.h"
++
++typedef enum
++{
++    NAL_UNIT_CODED_SLICE_TRAIL_N = 0,
++    NAL_UNIT_CODED_SLICE_TRAIL_R,
++    NAL_UNIT_CODED_SLICE_TSA_N,
++    NAL_UNIT_CODED_SLICE_TLA_R,
++    NAL_UNIT_CODED_SLICE_STSA_N,
++    NAL_UNIT_CODED_SLICE_STSA_R,
++    NAL_UNIT_CODED_SLICE_RADL_N,
++    NAL_UNIT_CODED_SLICE_RADL_R,
++    NAL_UNIT_CODED_SLICE_RASL_N,
++    NAL_UNIT_CODED_SLICE_RASL_R,
++    NAL_UNIT_CODED_SLICE_BLA_W_LP = 16,
++    NAL_UNIT_CODED_SLICE_BLA_W_RADL,
++    NAL_UNIT_CODED_SLICE_BLA_N_LP,
++    NAL_UNIT_CODED_SLICE_IDR_W_RADL,
++    NAL_UNIT_CODED_SLICE_IDR_N_LP,
++    NAL_UNIT_CODED_SLICE_CRA,
++    NAL_UNIT_VPS = 32,
++    NAL_UNIT_SPS,
++    NAL_UNIT_PPS,
++    NAL_UNIT_ACCESS_UNIT_DELIMITER,
++    NAL_UNIT_EOS,
++    NAL_UNIT_EOB,
++    NAL_UNIT_FILLER_DATA,
++    NAL_UNIT_PREFIX_SEI,
++    NAL_UNIT_SUFFIX_SEI,
++    NAL_UNIT_INVALID = 64,
++} NalUnitType;
++typedef struct libqy265Context {
++    const AVClass *class;
++
++    void  *encoder;
++    QY265EncConfig   *params;
++
++    char *preset;
++    char *tune;
++    char *license_file;
++    char *latency;
++    char *qy265_opts;
++} libqy265Context;
++
++static int is_keyframe(NalUnitType naltype)
++{
++    switch (naltype) {
++    case NAL_UNIT_CODED_SLICE_BLA_W_LP:
++    case NAL_UNIT_CODED_SLICE_BLA_W_RADL:
++    case NAL_UNIT_CODED_SLICE_BLA_N_LP:
++    case NAL_UNIT_CODED_SLICE_IDR_W_RADL:
++    case NAL_UNIT_CODED_SLICE_IDR_N_LP:
++    case NAL_UNIT_CODED_SLICE_CRA:
++        return 1;
++    default:
++        return 0;
++    }
++}
++
++static av_cold int libqy265_encode_close(AVCodecContext *avctx)
++{
++    libqy265Context *ctx = avctx->priv_data;
++    av_frame_free(&avctx->coded_frame);
++
++    free(ctx->params);
++
++    if (ctx->encoder)
++        QY265EncoderClose(ctx->encoder);
++
++    return 0;
++}
++
++static av_cold int libqy265_encode_init(AVCodecContext *avctx)
++{
++    libqy265Context *ctx = avctx->priv_data;
++    QY265Nal *nal;
++    char sar[12];
++    int sar_num, sar_den;
++    int nnal;
++    /*
++    char mstr[1024] = {0};
++    char mcode[128] = {0};
++    unsigned char auth[] = {57, 53, 109, 62, 119, 133, 15, 111, 44, 11, 35, 54, 128, 103, 132, 38, 117, 107, 135, 96, 88, 127, 49, 138, 146, 108, 117, 39, 96, 75, 91, 150}; //local
++   // unsigned char auth[] ={57, 54, 57, 66, 76, 79, 14, 110, 129, 15, 39, 106, 127, 105, 138, 42, 114, 21, 142, 54, 86, 52, 50, 98, 137, 65, 37, 46, 143, 76, 89, 68};
++    unsigned  char temp[64];
++    get_mcode(mstr, mcode, sizeof(mstr), sizeof(mcode));
++    char pass = 1;
++    for(int i = 0 ;i<sizeof(auth);++i){
++	temp[i] = ((unsigned int)(mcode[i])+i*i)%128+i+1;
++	if(temp[i] != auth[i]){
++        av_log(avctx, AV_LOG_ERROR,
++                "mechina failed to auth \n");
++	pass = 0;
++        return AVERROR(EINVAL);
++	}
++    }
++    if(pass == 0){
++        return AVERROR(EINVAL);
++    }
++   */
++    if (avctx->strict_std_compliance > FF_COMPLIANCE_EXPERIMENTAL &&
++        !av_pix_fmt_desc_get(avctx->pix_fmt)->log2_chroma_w) {
++            av_log(avctx, AV_LOG_ERROR,
++                "4:2:2 and 4:4:4 support is not fully defined for HEVC yet. "
++                "Set -strict experimental to encode anyway.\n");
++            return AVERROR(ENOSYS);
++    }
++
++    avctx->coded_frame = av_frame_alloc();
++    if (!avctx->coded_frame) {
++        av_log(avctx, AV_LOG_ERROR, "Could not allocate frame.\n");
++        return AVERROR(ENOMEM);
++    }
++
++    ctx->params = (QY265EncConfig*)(malloc(sizeof(QY265EncConfig)));
++    if (!ctx->params) {
++        av_log(avctx, AV_LOG_ERROR, "Could not allocate qy265 param structure.\n");
++        return AVERROR(ENOMEM);
++    }
++
++    if (QY265ConfigDefaultPreset(ctx->params, ctx->preset, ctx->tune, ctx->latency) < 0) {
++        av_log(avctx, AV_LOG_ERROR, "Invalid preset or tune or latency.\n");
++        return AVERROR(EINVAL);
++    }
++    //ctx->params->pAuth = avctx->opaque;
++    ctx->params->threads = avctx->thread_count;
++    ctx->params->frameRate          = avctx->time_base.den/(double)(avctx->time_base.num * avctx->ticks_per_frame);
++    ctx->params->picWidth     = avctx->width;
++    ctx->params->picHeight    = avctx->height;
++    // ctx->params->bEnablePsnr     = !!(avctx->flags & CODEC_FLAG_PSNR);
++
++    if (avctx->sample_aspect_ratio.num > 0 && avctx->sample_aspect_ratio.den > 0) {
++        av_reduce(&sar_num, &sar_den,
++            avctx->sample_aspect_ratio.num,
++            avctx->sample_aspect_ratio.den, 65535);
++        snprintf(sar, sizeof(sar), "%d:%d", sar_num, sar_den);
++        //to do , not support yet
++        /*
++        if (qy265_param_parse(ctx->params, "sar", sar) == qy265_PARAM_BAD_VALUE) {
++        av_log(avctx, AV_LOG_ERROR, "Invalid SAR: %d:%d.\n", sar_num, sar_den);
++        return AVERROR_INVALIDDATA;
++        }
++        */
++    }
++    /*
++    switch (avctx->pix_fmt) {
++    case AV_PIX_FMT_YUV420P:
++    case AV_PIX_FMT_YUV420P10:
++    ctx->params->internalCsp = qy265_CSP_I420;
++    break;
++    case AV_PIX_FMT_YUV422P:
++    case AV_PIX_FMT_YUV422P10:
++    ctx->params->internalCsp = qy265_CSP_I422;
++    break;
++    case AV_PIX_FMT_YUV444P:
++    case AV_PIX_FMT_YUV444P10:
++    ctx->params->internalCsp = qy265_CSP_I444;
++    break;
++    }
++    */
++    if (avctx->bit_rate > 0) {
++        ctx->params->bitrateInkbps         = avctx->bit_rate / 1000;
++        ctx->params->rc = 1;  // CBR
++    }
++
++    //keep bHeaderBeforeKeyframe always == 1
++    //if (!(avctx->flags & CODEC_FLAG_GLOBAL_HEADER))
++        ctx->params->bHeaderBeforeKeyframe = 1;
++    //else
++    //    ctx->params->bHeaderBeforeKeyframe = 0;
++
++
++    if(ctx->params->threads > 1){
++        ctx->params->enWavefront = 1;
++        ctx->params->enFrameParallel = 1;
++    }
++
++    if (ctx->qy265_opts) {
++        AVDictionary *dict    = NULL;
++        AVDictionaryEntry *en = NULL;
++
++        av_log(avctx, AV_LOG_INFO, "QY265Config %s \n", ctx->qy265_opts);
++
++        if (!av_dict_parse_string(&dict, ctx->qy265_opts, "=", ":", 0)) {
++            while ((en = av_dict_get(dict, "", en, AV_DICT_IGNORE_SUFFIX))) {
++                int parse_ret = QY265ConfigParse(ctx->params, en->key, en->value);
++
++                switch (parse_ret) {
++                case QY265_PARAM_BAD_NAME:
++                    av_log(avctx, AV_LOG_WARNING,
++                        "Unknown option: %s.\n", en->key);
++                    break;
++                case QY265_PARAM_BAD_VALUE:
++                    av_log(avctx, AV_LOG_WARNING,
++                        "Invalid value for %s: %s.\n", en->key, en->value);
++                    break;
++                default:
++                    break;
++                }
++            }
++            av_dict_free(&dict);
++        }
++    }
++
++#if KSAUTH_PRIVATE_AUTH
++    ctx->params->pAuth = (void*)(ctx->license_file);
++    av_log(avctx, AV_LOG_INFO, "QY265Config local license file : %s \n", ctx->license_file);
++#else
++    ctx->params->pAuth = avctx->opaque;
++#endif
++    av_log(avctx, AV_LOG_INFO, "QY265Config %s %s %s.\n", ctx->preset, ctx->tune, ctx->latency);
++    av_log(avctx, AV_LOG_INFO, "bHeaderBeforeKeyframe %d .\n", ctx->params->bHeaderBeforeKeyframe);
++    av_log(avctx, AV_LOG_INFO, "resolution %d x %d .\n", ctx->params->picWidth,ctx->params->picHeight);
++    av_log(avctx, AV_LOG_INFO, "frameRate %f .\n", ctx->params->frameRate);
++    av_log(avctx, AV_LOG_INFO, "rc %d .\n", ctx->params->rc);
++    av_log(avctx, AV_LOG_INFO, "bitrateInkbps %d .\n", ctx->params->bitrateInkbps);
++    av_log(avctx, AV_LOG_INFO, "qp %d .\n", ctx->params->qp);
++    av_log(avctx, AV_LOG_INFO, "crf %d .\n", ctx->params->crf);
++    av_log(avctx, AV_LOG_INFO, "iIntraPeriod %d .\n", ctx->params->iIntraPeriod);
++    av_log(avctx, AV_LOG_INFO, "qpmin %d .\n", ctx->params->qpmin);
++    av_log(avctx, AV_LOG_INFO, "qpmax %d .\n", ctx->params->qpmax);
++    av_log(avctx, AV_LOG_INFO, "enWavefront %d .\n", ctx->params->enWavefront);
++    av_log(avctx, AV_LOG_INFO, "enFrameParallel %d .\n", ctx->params->enFrameParallel);
++    av_log(avctx, AV_LOG_INFO, "threads %d .\n", ctx->params->threads);
++    av_log(avctx, AV_LOG_INFO, "logLevel %d .\n", ctx->params->logLevel);
++    av_log(avctx, AV_LOG_INFO, "calcPsnr %d .\n", ctx->params->calcPsnr);
++    av_log(avctx, AV_LOG_INFO, "bframes %d .\n", ctx->params->bframes);
++    // set bit_rate for metadata
++    avctx->bit_rate = (ctx->params->bitrateInkbps * 1000);
++
++    int errCode = 0;
++    ctx->encoder = QY265EncoderOpen(ctx->params, &errCode);
++    if (!ctx->encoder) {
++        av_log(avctx, AV_LOG_ERROR, "Cannot open libqy265 encoder. %d\n", errCode);
++        libqy265_encode_close(avctx);
++        return AVERROR_INVALIDDATA;
++    }
++
++    if (avctx->flags & CODEC_FLAG_GLOBAL_HEADER) {
++        avctx->extradata_size = QY265EncoderEncodeHeaders(ctx->encoder, &nal, &nnal);
++        av_log(avctx, AV_LOG_INFO, "QY265EncoderEncodeHeaders %d.\n",avctx->extradata_size);
++        if (avctx->extradata_size <= 0) {
++            av_log(avctx, AV_LOG_ERROR, "Cannot encode headers.\n");
++            libqy265_encode_close(avctx);
++            return AVERROR_INVALIDDATA;
++        }
++
++        avctx->extradata = av_malloc(avctx->extradata_size + FF_INPUT_BUFFER_PADDING_SIZE);
++        if (!avctx->extradata) {
++            av_log(avctx, AV_LOG_ERROR,
++                "Cannot allocate HEVC header of size %d.\n", avctx->extradata_size);
++            libqy265_encode_close(avctx);
++            return AVERROR(ENOMEM);
++        }
++
++        memcpy(avctx->extradata, nal[0].pPayload, avctx->extradata_size);
++    }
++
++    return 0;
++}
++
++static int libqy265_encode_frame(AVCodecContext *avctx, AVPacket *pkt,
++                                 const AVFrame *pic, int *got_packet)
++{
++    libqy265Context *ctx = avctx->priv_data;
++    QY265YUV yuv;
++    QY265Picture qy265pic;
++    QY265Picture qy265pic_out;
++    QY265Nal *nal;
++    uint8_t *dst;
++    int payload = 0;
++    int nnal;
++    int ret;
++    int i;
++
++    qy265pic.yuv = &yuv;
++    memset(&qy265pic_out,0,sizeof(qy265pic_out));
++    //qy265_picture_init(ctx->params, &qy265pic);
++
++    if (pic) {
++        qy265pic.yuv->iWidth = ctx->params->picWidth;
++        qy265pic.yuv->iHeight = ctx->params->picHeight;
++        for (i = 0; i < 3; i++) {
++            qy265pic.yuv->pData[i] = pic->data[i];
++            qy265pic.yuv->iStride[i] = pic->linesize[i];
++        }
++        qy265pic.pts      = pic->pts;
++        //qy265pic.bitDepth = av_pix_fmt_desc_get(avctx->pix_fmt)->comp[0].depth_minus1 + 1;
++    }
++#if CONFIG_KSY_RTMP_BUFFER
++    int bit_rate_available_kbps = avctx->bit_rate / 1000;
++    if(avctx->bit_rate_available!=0){
++        bit_rate_available_kbps = FFMIN(avctx->bit_rate_available/1000,bit_rate_available_kbps);
++    }
++    int deltaKbps = abs ( ctx->params->bitrateInkbps - bit_rate_available_kbps );
++    if ( deltaKbps > 20 &&
++        ctx->params->rc == 1 ){  // CBR
++        av_log(avctx, AV_LOG_DEBUG, "reconfig: %dkbps -> %dkbps",ctx->params->bitrateInkbps,bit_rate_available_kbps);
++        //printf("reconfig: %dkbps -> %dkbps\n",ctx->params->bitrateInkbps,bit_rate_available_kbps);
++        ctx->params->bitrateInkbps = bit_rate_available_kbps;
++        QY265EncoderReconfig(ctx->encoder, ctx->params);
++    }
++#endif
++    ret = QY265EncoderEncodeFrame(ctx->encoder, &nal, &nnal,
++        pic ? &qy265pic : NULL, &qy265pic_out, 0);
++    if (ret < 0)
++        return AVERROR_EXTERNAL;
++
++    if (!nnal)
++        return 0;
++
++    for (i = 0; i < nnal; i++)
++        payload += nal[i].iSize;
++
++#if KS_QY265
++    if (ctx->params->maxbits >0.0 && payload >0){
++      ctx->params->totalbits += payload;
++      if(ctx->params->totalbits > ctx->params->maxbits){
++      av_log(ctx, AV_LOG_ERROR, "video bits overflow total bits %lld max_bits %lld \n", ctx->params->totalbits,ctx->params->maxbits);
++        return AVERROR_EXTERNAL;
++      }
++    }
++    if(ctx->params->ssdmax < 1<<30){
++        int psnr_constrain = FFMIN(40, 40 - (ctx->params->ssdmax - 7.5) / 2.0);
++        float f_ssd_constrain = ctx->params->ssdmax;
++        //printf("libx264_x264_frame test frame ssd f_ssd_constrain %6.3f,psnr_constrain %6.3f\n", f_ssd_constrain, psnr_constrain);
++        if ((qy265pic_out.f_ssd_max > f_ssd_constrain || qy265pic_out.f_psnr_min < psnr_constrain && qy265pic_out.f_psnr_min) && f_ssd_constrain){
++            qy265pic_out.f_ssd_max = FFMAX(f_ssd_constrain + 0.000001, qy265pic_out.f_ssd_max);
++            av_log(ctx, AV_LOG_ERROR, "readfilter,ssdmax=%f,psnr_min=%f\n", qy265pic_out.f_ssd_max, qy265pic_out.f_psnr_min);
++            return AVERROR_EXTERNAL;
++        }
++    }
++#endif
++
++    ret = ff_alloc_packet(pkt, payload);
++    if (ret < 0) {
++        av_log(avctx, AV_LOG_ERROR, "Error getting output packet.\n");
++        return ret;
++    }
++    dst = pkt->data;
++
++    for (i = 0; i < nnal; i++) {
++        memcpy(dst, nal[i].pPayload, nal[i].iSize);
++        dst += nal[i].iSize;
++
++        if (is_keyframe(nal[i].naltype))
++            pkt->flags |= AV_PKT_FLAG_KEY;
++    }
++    pkt->pts = qy265pic_out.pts;
++    pkt->dts = qy265pic_out.dts;
++#if CONFIG_KSY_RTMP_BUFFER
++    if ( pkt->flags & AV_PKT_FLAG_KEY ){
++        pkt->priority = nal[0].tid;
++    }else{
++        pkt->priority = nal[0].tid + 1;
++    }
++    //printf("priority %d ; tid %d size:%d\n", pkt->priority, nal[0].tid, (int)(dst - pkt->data));
++#endif
++    *got_packet = 1;
++    return 0;
++}
++
++static const enum AVPixelFormat qy265_csp_eight[] = {
++    AV_PIX_FMT_YUV420P,
++    AV_PIX_FMT_YUV422P,
++    AV_PIX_FMT_YUV444P,
++    AV_PIX_FMT_NONE
++};
++
++
++static av_cold void libqy265_encode_init_csp(AVCodec *codec)
++{
++    codec->pix_fmts = qy265_csp_eight;
++}
++
++#define OFFSET(x) offsetof(libqy265Context, x)
++#define VE AV_OPT_FLAG_VIDEO_PARAM | AV_OPT_FLAG_ENCODING_PARAM
++static const AVOption options[] = {
++    { "preset",      "set the qy265 preset",                                                         OFFSET(preset),    AV_OPT_TYPE_STRING, { 0 }, 0, 0, VE },
++    { "tune",        "set the qy265 tune parameter",                                                 OFFSET(tune),      AV_OPT_TYPE_STRING, { 0 }, 0, 0, VE },
++    { "qylf", "set the qy265 local License file path parameter",                              OFFSET(license_file),      AV_OPT_TYPE_STRING, { "ks265.key" }, 0, 0, VE },
++    { "tune",        "set the qy265 tune parameter",                                                 OFFSET(tune),      AV_OPT_TYPE_STRING, { 0 }, 0, 0, VE },
++    { "latency",     "set the qy265 latency parameter",                                              OFFSET(latency),      AV_OPT_TYPE_STRING, { 0 }, 0, 0, VE },
++    { "qy265-params", "set the qy265 configuration using a :-separated list of key=value parameters", OFFSET(qy265_opts), AV_OPT_TYPE_STRING, { 0 }, 0, 0, VE },
++    { NULL }
++};
++
++static const AVClass class = {
++    .class_name = "libqy265",
++    .item_name  = av_default_item_name,
++    .option     = options,
++    .version    = LIBAVUTIL_VERSION_INT,
++};
++
++static const AVCodecDefault qy265_defaults[] = {
++    { "b", "0" },
++    { NULL },
++};
++
++AVCodec ff_libqy265_encoder = {
++    .name             = "libqy265",
++    .long_name        = NULL_IF_CONFIG_SMALL("libqy265 H.265 / HEVC"),
++    .type             = AVMEDIA_TYPE_VIDEO,
++    .id               = AV_CODEC_ID_HEVC,
++    .init             = libqy265_encode_init,
++    .init_static_data = libqy265_encode_init_csp,
++    .encode2          = libqy265_encode_frame,
++    .close            = libqy265_encode_close,
++    .priv_data_size   = sizeof(libqy265Context),
++    .priv_class       = &class,
++    .defaults         = qy265_defaults,
++    .capabilities     = CODEC_CAP_DELAY | CODEC_CAP_AUTO_THREADS,
++};
++
+diff --git a/libavcodec/qy265dec.h b/libavcodec/qy265dec.h
+new file mode 100644
+index 0000000..6bc22d4
+--- /dev/null
++++ b/libavcodec/qy265dec.h
+@@ -0,0 +1,88 @@
++///////////////////////////////////////////////////
++//
++//         Qianyi H265 Codec Library
++//
++//  Copyright(c) 2013-2014 Qianyi, Inc.
++//              www.qyvideo.cn
++//
++///////////////////////////////////////////////////
++/************************************************************************************
++* decInf.h: interface of decoder for user
++*
++* \date     2013-09-28: first version
++*
++************************************************************************************/
++#ifndef _QY265_DECODER_INTERFACE_H_
++#define  _QY265_DECODER_INTERFACE_H_
++
++#include "qy265def.h"
++
++// config parameters for Decoder
++typedef struct QY265DecConfig {
++    void* pAuth;                //QYAuth, invalid if don't need aksk auth
++    int threads;               // number of threads used in decoding (0: auto)
++    int bEnableOutputRecToFile;  // For debug: write reconstruct YUV to File
++    char* strRecYuvFileName;      // For debug: file name of YUV
++                                  // when bEnableOutputRecToFile = 1
++    int logLevel;               //For debug: log level
++}QY265DecConfig;
++
++// information of decoded frame
++typedef struct QY265FrameInfo {
++    int nWidth;     // frame width
++    int nHeight;    // frame height
++    long long pts;  // time stamp
++    int bIllegalStream; // input bit stream is illegal
++    int poc;
++}QY265FrameInfo;
++
++// decoded frame with data and information
++typedef struct QY265Frame {
++    int  bValid; //if == 0, no more valid output frame
++    unsigned char* pData[3]; // Y U V
++    short iStride[3];        // stride for each component
++    QY265FrameInfo frameinfo;
++}QY265Frame;
++
++
++#if defined(__cplusplus)
++extern "C" {
++#endif//__cplusplus
++
++/************************************************************************************
++* I/F for all usrs
++************************************************************************************/
++// create decoder, return  handle of decoder
++_h_dll_export void* QY265DecoderCreate(QY265DecConfig* pDecConfig, int * pStat);
++// destroy decoder with specific handle
++_h_dll_export void QY265DecoderDestroy(void* pDecoder);
++// set config to specific decoder
++_h_dll_export void QY265DecoderSetDecConfig(void *pDecoder, QY265DecConfig* pDecConfig, int * pStat);
++//the input of this function should be one or more NALs;
++//if only one NAL, with or without start bytes are both OK
++_h_dll_export void QY265DecodeFrame(void *pDecoder, unsigned char* pData, int iLen, int * pStat, const long long pts);
++// bSkip = false : same as QY265DecodeFrame
++// bSkip = true : only decode slice headers in pData, slice data skipped
++_h_dll_export void QY265DecodeFrameEnSkip(void *pDecoder, unsigned char* pData, int iLen, int * pStat, const long long pts, int bSkip);
++//flush decoding, called at end
++_h_dll_export void QY265DecodeFlush(void *pDecoder, int bClearCachedPics, int * pStat);
++// retrieve the output, the function are used for synchronized output, this function need to call several time until get NULL
++// if bForceLogo == true, only one frame buffer inside, need  return before get next output
++_h_dll_export void QY265DecoderGetDecodedFrame(void *pDecoder, QY265Frame* pFrame, int * pStat, int bForceLogo);
++// return the frame buffer which QY265DecoderGetOutput get from decoder, each valid QY265DecoderGetOutput should match with a ReturnFrame
++_h_dll_export void QY265DecoderReturnDecodedFrame( void *pDecoder, QY265Frame* pFrame);
++
++/**
++ * dump latest decoded VUI parameters
++ * @param_input pDecoder:   decoder instance
++ * @param_output vui:       fill with decoded vui parameters
++ * @param_output bValid: =0 if no valid vui parameters decoded,
++ *                      otherwise =1
++ */
++_h_dll_export void QY265DumpVUIParameters(void* pDecoder, vui_parameters* vui, int* bValid);
++
++#if defined(__cplusplus)
++}
++#endif//__cplusplus
++
++#endif//header
+diff --git a/libavcodec/qy265def.h b/libavcodec/qy265def.h
+new file mode 100644
+index 0000000..801d3aa
+--- /dev/null
++++ b/libavcodec/qy265def.h
+@@ -0,0 +1,199 @@
++#ifndef _QY265_DEF_H_
++#define  _QY265_DEF_H_
++
++// ****************************************
++// error type
++// ****************************************
++enum
++{
++    QY_OK = (0x00000000),          // Success codes
++    QY_FAIL = (0x80000001),        //  Unspecified error
++    QY_OUTOFMEMORY = (0x80000002), //  Ran out of memory
++    QY_POINTER = (0x80000003),     //  Invalid pointer
++    QY_NOTSUPPORTED = (0x80000004),//  NOT support feature encoutnered
++    QY_AUTH_INVALID = (0x80000005), //  authentication invalid
++    QY_SEARCHING_ACCESS_POINT = (0x00000001), // in process of searching first access point
++    QY_REF_PIC_NOT_FOUND = (0x00000007), // reference picture not found, can be ignored
++#if defined(EMSCRIPTEN)||defined(_TEST_FOR_EMSCRIPTEN)
++    QY_NEED_MORE_DATA = (0x00000008), //need push more data
++#endif
++    QY_BITSTREAM_ERROR = (0x00000009), // detecting bitstream error, can be ignored
++};
++
++enum NAL_UNIT_TYPE{
++    NAL_UNIT_TYPE_TRAIL_N = 0,
++    NAL_UNIT_TYPE_TRAIL_R = 1,
++
++    NAL_UNIT_TYPE_TSA_N = 2,
++    NAL_UNIT_TYPE_TSA_R = 3,
++
++    NAL_UNIT_TYPE_STSA_N = 4,
++    NAL_UNIT_TYPE_STSA_R = 5,
++
++    NAL_UNIT_TYPE_RADL_N = 6,
++    NAL_UNIT_TYPE_RADL_R = 7,
++
++    NAL_UNIT_TYPE_RASL_N = 8,
++    NAL_UNIT_TYPE_RASL_R = 9,
++
++    //reserved
++    NAL_UNIT_TYPE_RSV_VCL_N10 = 10,
++    NAL_UNIT_TYPE_RSV_VCL_N12 = 12,
++    NAL_UNIT_TYPE_RSV_VCL_N14 = 13,
++    NAL_UNIT_TYPE_RSV_VCL_R11 = 11,
++    NAL_UNIT_TYPE_RSV_VCL_R13 = 13,
++    NAL_UNIT_TYPE_RSV_VCL_R15 = 15,
++
++    NAL_UNIT_TYPE_BLA_W_LP = 16,
++    NAL_UNIT_TYPE_BLA_W_RADL = 17,
++    NAL_UNIT_TYPE_BLA_N_LP = 18,
++
++    NAL_UNIT_TYPE_IDR_W_RADL = 19,
++    NAL_UNIT_TYPE_IDR_N_LP = 20,
++
++    NAL_UNIT_TYPE_CRA_NUT = 21,
++
++    NAL_UNIT_TYPE_RSV_IRAP_VCL22 = 22,
++    NAL_UNIT_TYPE_RSV_IRAP_VCL23 = 23,
++
++    NAL_UNIT_TYPE_RSV_VCL24 = 24,
++    NAL_UNIT_TYPE_RSV_VCL25 = 25,
++    NAL_UNIT_TYPE_RSV_VCL26 = 26,
++    NAL_UNIT_TYPE_RSV_VCL27 = 27,
++    NAL_UNIT_TYPE_RSV_VCL28 = 28,
++    NAL_UNIT_TYPE_RSV_VCL29 = 29,
++    NAL_UNIT_TYPE_RSV_VCL30 = 30,
++    NAL_UNIT_TYPE_RSV_VCL31 = 31,
++
++    NAL_UNIT_TYPE_VPS_NUT = 32,
++    NAL_UNIT_TYPE_SPS_NUT = 33,
++    NAL_UNIT_TYPE_PPS_NUT = 34,
++    NAL_UNIT_TYPE_AUD_NUT = 35,
++    NAL_UNIT_TYPE_EOS_NUT = 36,
++    NAL_UNIT_TYPE_EOB_NUT = 37,
++    NAL_UNIT_TYPE_FD_NUT = 38,
++
++    NAL_UNIT_TYPE_PREFIX_SEI_NUT = 39,
++    NAL_UNIT_TYPE_SUFFIX_SEI_NUT = 40,
++
++    NAL_UNIT_TYPE_RSV_NVCL41 = 41,
++    NAL_UNIT_TYPE_RSV_NVCL42 = 42,
++    NAL_UNIT_TYPE_RSV_NVCL43 = 43,
++    NAL_UNIT_TYPE_RSV_NVCL44 = 44,
++    NAL_UNIT_TYPE_RSV_NVCL45 = 45,
++    NAL_UNIT_TYPE_RSV_NVCL46 = 46,
++    NAL_UNIT_TYPE_RSV_NVCL47 = 47,
++
++    NAL_UNIT_TYPE_UNSPEC48 = 48,
++    NAL_UNIT_TYPE_UNSPEC49 = 49,
++    NAL_UNIT_TYPE_UNSPEC50 = 50,
++    NAL_UNIT_TYPE_UNSPEC51 = 51,
++    NAL_UNIT_TYPE_UNSPEC52 = 52,
++    NAL_UNIT_TYPE_UNSPEC53 = 53,
++    NAL_UNIT_TYPE_UNSPEC54 = 54,
++    NAL_UNIT_TYPE_UNSPEC55 = 55,
++    NAL_UNIT_TYPE_UNSPEC56 = 56,
++    NAL_UNIT_TYPE_UNSPEC57 = 57,
++    NAL_UNIT_TYPE_UNSPEC58 = 58,
++    NAL_UNIT_TYPE_UNSPEC59 = 59,
++    NAL_UNIT_TYPE_UNSPEC60 = 60,
++    NAL_UNIT_TYPE_UNSPEC61 = 61,
++    NAL_UNIT_TYPE_UNSPEC62 = 62,
++    NAL_UNIT_TYPE_UNSPEC63 = 63,
++};
++
++// ****************************************
++// VUI
++// ****************************************
++typedef struct vui_parameters{
++        // --- sample aspect ratio (SAR) ---
++    unsigned char     aspect_ratio_info_present_flag;
++    unsigned short sar_width;  // sar_width and sar_height are zero if unspecified
++    unsigned short sar_height;
++
++    // --- overscan ---
++    unsigned char     overscan_info_present_flag;
++    unsigned char     overscan_appropriate_flag;
++
++    // --- video signal type ---
++    unsigned char   video_signal_type_present_flag;
++    unsigned char   video_format;
++    unsigned char   video_full_range_flag;
++    unsigned char   colour_description_present_flag;
++    unsigned char   colour_primaries;
++    unsigned char   transfer_characteristics;
++    unsigned char   matrix_coeffs;
++
++    // --- chroma / interlaced ---
++    unsigned char     chroma_loc_info_present_flag;
++    unsigned char  chroma_sample_loc_type_top_field;
++    unsigned char  chroma_sample_loc_type_bottom_field;
++    unsigned char     neutral_chroma_indication_flag;
++    unsigned char     field_seq_flag;
++    unsigned char     frame_field_info_present_flag;
++
++    // --- default display window ---
++    unsigned char     default_display_window_flag;
++    unsigned int def_disp_win_left_offset;
++    unsigned int def_disp_win_right_offset;
++    unsigned int def_disp_win_top_offset;
++    unsigned int def_disp_win_bottom_offset;
++
++    // --- timing ---
++    unsigned char     vui_timing_info_present_flag;
++    unsigned int vui_num_units_in_tick;
++    unsigned int vui_time_scale;
++
++    unsigned char     vui_poc_proportional_to_timing_flag;
++    unsigned int vui_num_ticks_poc_diff_one;
++
++    // --- hrd parameters ---
++    unsigned char     vui_hrd_parameters_present_flag;
++    //hrd_parameters vui_hrd_parameters;
++
++    // --- bitstream restriction ---
++    unsigned char bitstream_restriction_flag;
++    unsigned char tiles_fixed_structure_flag;
++    unsigned char motion_vectors_over_pic_boundaries_flag;
++    unsigned char restricted_ref_pic_lists_flag;
++    unsigned short min_spatial_segmentation_idc;
++    unsigned char  max_bytes_per_pic_denom;
++    unsigned char  max_bits_per_min_cu_denom;
++    unsigned char  log2_max_mv_length_horizontal;
++    unsigned char  log2_max_mv_length_vertical;
++}vui_parameters;
++
++#if defined(SWIG) || defined(__AVM2__)
++#define _h_dll_export
++#else
++
++#ifdef WIN32
++#define _h_dll_export   __declspec(dllexport)
++#else // for GCC
++#define _h_dll_export __attribute__ ((visibility("default")))
++#endif
++
++#endif  //SWIG
++
++typedef void  (*QYLogPrintf)(const char* msg);
++typedef void  (*QYAuthWarning)();
++
++#if defined(__cplusplus)
++extern "C" {
++#endif//__cplusplus
++
++// log output callback func pointer 
++// if  pFuncCB == NULL, use the default printf
++_h_dll_export void QY265SetLogPrintf ( QYLogPrintf pFuncCB);
++
++// auth trouble warning callback func pointer
++_h_dll_export void QY265SetAuthWarning ( QYAuthWarning pFuncCB);
++
++#if defined(__cplusplus)
++}
++#endif//__cplusplus
++
++//libqy265 version number string
++_h_dll_export extern const char strLibQy265Version[];
++
++#endif
+diff --git a/libavcodec/qy265enc.h b/libavcodec/qy265enc.h
+new file mode 100644
+index 0000000..53c858e
+--- /dev/null
++++ b/libavcodec/qy265enc.h
+@@ -0,0 +1,203 @@
++///////////////////////////////////////////////////
++//
++//         Kingsoft H265 Codec Library 
++//
++//  Copyright(c) Kingsoft cloud Inc.
++//              http://www.ksyun.com/
++//
++///////////////////////////////////////////////////
++/************************************************************************************
++* encInf.h: interface of encoder for user
++*
++* \date     2013-09-28: first version
++*    
++************************************************************************************/
++#ifndef   _QY265_ENCODER_INTERFACE_H_
++#define   _QY265_ENCODER_INTERFACE_H_
++
++#include "qy265def.h"
++// ****************************************
++// base configuration 
++// ****************************************
++//app type
++typedef enum QY265Tune_tag{
++    QY265TUNE_DEFAULT = 0,
++    QY265TUNE_SELFSHOW = 1,
++    QY265TUNE_GAME = 2,
++    QY265TUNE_MOVIE = 3,
++    QY265TUNE_SCREEN = 4
++}QY265Tune;
++
++typedef enum QY265Preset_tag{
++    QY265PRESET_ULTRAFAST = 0,
++    QY265PRESET_SUPERFAST = 1,
++    QY265PRESET_VERYFAST = 2,
++    QY265PRESET_FAST = 3,
++    QY265PRESET_MEDIUM = 4,
++    QY265PRESET_SLOW = 5,
++    QY265PRESET_VERYSLOW = 6,
++    QY265PRESET_PLACEBO = 7,
++}QY265Preset;
++
++typedef enum QY265Latency_tag{
++    QY265LATENCY_ZERO = 0,
++    QY265LATENCY_LOWDELAY = 1,
++    QY265LATENCY_LIVESTREMING = 2,
++    QY265LATENCY_OFFLINE = 3,
++}QY265Latency;
++
++//base configuration
++typedef struct QY265EncConfig{
++    void* pAuth;        //QYAuth, invalid if don't need aksk auth
++    QY265Tune tune;    //
++    QY265Preset preset;
++    QY265Latency latency;
++    int bHeaderBeforeKeyframe; //whether output vps,sps,pps before key frame, default 1. dis/enable 0/1
++    int picWidth;          // input frame width
++    int picHeight;         // input frame height
++    double frameRate;      // input frame rate
++    int bframes;           // num of bi-pred frames, -1: using default
++    int temporalLayer;     // works with QY265LATENCY_ZERO, separate P frames into temporal layers, 0 or 1
++
++    int rc;                // rc type 0 disable,1 cbr,2 abr,3 crf, default 2
++    int bitrateInkbps;     // target bit rate in kbps, valid when rctype is cbr abd vbr
++    int vbv_buffer_size;   // buf size of vbv
++    int vbv_max_rate;      // max rate of vbv
++    int qp;                // valid when rctype is disable, default 26
++    int crf;               // valid when rctype is crf,default 24
++    int iIntraPeriod;      // I-Frame period, -1 = only first
++    int qpmin;              //minimal qp, valid when rc != 0, 0~51
++    int qpmax;              //maximal qp, valid when rc != 0, 1~51, qpmax = 0 means 51
++    int enFrameSkip;        //1: enable frame skip for ratecontrol, default 0
++    //* Execute Properties 
++    int enWavefront;       //enable wave front parallel
++    int enFrameParallel;   //enable frame parallel
++    int threads;           // number of threads used in encoding ( for wavefront, frame parallel, or enable both )
++    //* vui_parameters
++    //vui_parameters_present_flag equal to 1 specifies that the vui_parameters() syntax in struct vui should set by usr
++    int vui_parameters_present_flag;
++    struct{
++        /* video_signal_type_present_flag.  If this is set then
++         * video_format, video_full_range_flag and colour_description_present_flag
++         * will be added to the VUI. The default is false */
++        int video_signal_type_present_flag;
++        /* Video format of the source video.  0 = component, 1 = PAL, 2 = NTSC,
++         * 3 = SECAM, 4 = MAC, 5 = unspecified video format is the default */
++        int video_format;
++        /* video_full_range_flag indicates the black level and range of the luma
++         * and chroma signals as derived from E'Y, E'PB, and E'PR or E'R, E'G,
++         * and E'B real-valued component signals. The default is false */
++        int video_full_range_flag;
++        /* colour_description_present_flag in the VUI. If this is set then
++         * color_primaries, transfer_characteristics and matrix_coeffs are to be
++         * added to the VUI. The default is false */
++        int colour_description_present_flag;
++        /* colour_primaries holds the chromacity coordinates of the source
++         * primaries. The default is 2 */
++        int colour_primaries;
++        /* transfer_characteristics indicates the opto-electronic transfer
++         * characteristic of the source picture. The default is 2 */
++        int transfer_characteristics;
++        /* matrix_coeffs used to derive the luma and chroma signals from
++         * the red, blue and green primaries. The default is 2 */
++        int matrix_coeffs;
++    }vui;
++    //* debug
++    int logLevel;
++    int calcPsnr;          //0:not calc psnr; 1: print total psnr; 2: print each frame
++    int shortLoadingForPlayer;  //reduce b frames after I frame, for shorting the loading time of VOD for some players
++    //ZEL_2PASS:parameters for 2pass
++    //bool_t   enSlowFirstPass;
++    int  iPass;
++    char statFileName[256]; //set by user
++}QY265EncConfig;
++
++// ****************************************
++// callback functions
++// ****************************************
++//the encoder works in asynchronous mode (for supports of B frames)
++//once calling on EncodeFrame not corresponds to one Frame's bitstream output
++//thus, use callback function on Frame Encoded
++//also, buffer of srcYUV should be reserved for encoder, until it's done
++// CALLBACK method to feed the encoded bit stream
++
++// input frame data and info
++typedef struct QY265YUV{
++    int iWidth;                 // input frame width
++    int iHeight;                // input frame height
++    unsigned char* pData[3];    // input frame Y U V
++    int iStride[3];             // stride for Y U V
++}QY265YUV;
++
++// input frame data and info
++typedef struct QY265Picture{
++    int iSliceType; // specified by output pictures
++    int poc;        // ignored on input
++    long long pts;
++    long long dts;
++    QY265YUV* yuv;
++}QY265Picture;
++
++
++typedef struct QY265Nal
++{
++    int naltype;
++    int tid;
++    int iSize;
++    long long pts;
++    unsigned char* pPayload;
++}QY265Nal;
++
++
++#if defined(__cplusplus)
++extern "C" {
++#endif//__cplusplus
++/**
++* create encoder
++* @param pCfg : base config of encoder
++* @param errorCode: error code
++* @return encoder handle
++*/
++_h_dll_export void* QY265EncoderOpen(QY265EncConfig* pCfg, int *errorCode);
++// destroy encoder 
++_h_dll_export void QY265EncoderClose(void* pEncoder);
++// reconfig encoder
++_h_dll_export void QY265EncoderReconfig(void* pEncoder,QY265EncConfig* pCfg);
++// return the VPS, SPS and PPS that will be used for the whole stream.
++_h_dll_export int QY265EncoderEncodeHeaders(void* pEncoder,QY265Nal** pNals,int* iNalCount);
++
++/**
++* Encode one frame add logo or not
++*
++* @param pEncoder   handle of encoder
++* @param pNals      pointer array of output NAL units
++* @param iNalCount  output NAL unit count
++* @param pInPic     input frame
++* @param pOutPic    output frame
++* @param bForceLogo add logo on the input frame ( when auth failed)
++* @return if succeed, return 0; if failed, return the error code
++*/
++_h_dll_export int QY265EncoderEncodeFrame(void* pEncoder, QY265Nal** pNals, int* iNalCount, QY265Picture* pInpic, QY265Picture* pOutpic, int bForceLogo);
++
++// Request encoder to encode a Key Frame
++_h_dll_export void QY265EncoderKeyFrameRequest(void* pEncoder);
++// current buffered frames 
++_h_dll_export int QY265EncoderDelayedFrames(void* pEncoder);
++
++static const char* const  qy265_preset_names[] = { "ultrafast", "superfast", "veryfast", "fast", "medium", "slow", "veryslow", "placebo", 0 };
++static const char* const  qy265_tunes_names[] = { "default", "selfshow", "game", "movie", "screen", 0 };
++static const char* const  qy265_latency_names[] = { "zerolatency", "lowdelay", "livestreaming", "offline", 0 };
++// get default config values by preset, tune and latency. enum format
++_h_dll_export int QY265ConfigDefault(QY265EncConfig* pConfig, QY265Preset preset, QY265Tune tune, QY265Latency latency);
++
++// get default config values by preset, tune and latency. string format
++_h_dll_export int QY265ConfigDefaultPreset(QY265EncConfig* pConfig, char* preset, char* tune, char* latency);
++
++#define QY265_PARAM_BAD_NAME  (-1)
++#define QY265_PARAM_BAD_VALUE (-2)
++_h_dll_export int QY265ConfigParse(QY265EncConfig *p, const char *name, const char *value);
++#if defined(__cplusplus)
++}
++#endif//__cplusplus
++
++#endif
+diff --git a/libavcodec/qyauth_env.h b/libavcodec/qyauth_env.h
+new file mode 100644
+index 0000000..1807c92
+--- /dev/null
++++ b/libavcodec/qyauth_env.h
+@@ -0,0 +1,39 @@
++
++#ifndef _KS_AUTH_ENV_H_
++#define _KS_AUTH_ENV_H_
++
++#if !defined(WIN32)
++#include <stdint.h>
++#endif
++
++#define MAX_URL_LEN 2048
++#define MAX_LEN 512
++#define AUTH_ADDR_NUM 3
++//***********************************
++//* KSPrivateAuthEnv used as AUTH struct
++//* when private server auth method is adopted
++//***********************************
++#ifndef KSAUTH_PRIVATE_AUTH
++#define KSAUTH_PRIVATE_AUTH 1
++#endif
++
++//***********************************
++//for Android, TCounterEnv used as AUTH struct
++//when adopt Count auth method
++#ifndef __PLATFORM_COUNTER_ENV__
++#define __PLATFORM_COUNTER_ENV__
++
++#ifdef ANDROID
++#include <jni.h>
++typedef struct _TCounterEnv
++{
++    JavaVM *jvm;
++    jobject context;
++}TCounterEnv;
++#endif
++
++#endif
++
++_h_dll_export extern const char strKsc265AuthVersion[];
++
++#endif //header

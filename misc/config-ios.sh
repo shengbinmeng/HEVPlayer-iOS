@@ -1,14 +1,18 @@
 #!/bin/bash
 
 #
-# Change these variables according to your system.
+# Set the CPU architecture you want to build for.
 #
-SDK_VERSION=8.3
-IOS_ARCH=armv7
+IOS_ARCH=arm64
+
+PREFIX=./ios-player/${IOS_ARCH}
 TOOLCHAIN=/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain
-SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/iPhoneOS.platform/Developer/SDKs/iPhoneOS${SDK_VERSION}.sdk
-PREFIX=./ios/${IOS_ARCH}
-LENTHEVCDEC=./thirdparty/lenthevcdec
+if [ "$IOS_ARCH" = "i386" -o "$IOS_ARCH" = "x86_64" ]
+then
+	SYSROOT=$(xcrun -sdk iphonesimulator --show-sdk-path)
+else
+	SYSROOT=$(xcrun -sdk iphoneos --show-sdk-path)
+fi
 
 #
 # Read the configure help carefully before you want to change the following options.
@@ -16,14 +20,13 @@ LENTHEVCDEC=./thirdparty/lenthevcdec
 ./configure \
 	--prefix=${PREFIX} \
 	--target-os=darwin \
-	--arch=arm \
-	--cpu=armv7-a \
+	--arch=${IOS_ARCH} \
 	--enable-cross-compile \
 	--cross-prefix=${TOOLCHAIN}/usr/bin/ \
 	--cc=${TOOLCHAIN}/usr/bin/cc \
 	--sysroot=${SYSROOT} \
-	--extra-cflags="-O2 -I$LENTHEVCDEC/include -arch ${IOS_ARCH} -mfpu=neon -mfloat-abi=softfp" \
-	--extra-ldflags="-L$LENTHEVCDEC/lib -arch ${IOS_ARCH} -isysroot ${SYSROOT}" \
+	--extra-cflags="-O2 -arch ${IOS_ARCH}" \
+	--extra-ldflags="-arch ${IOS_ARCH} -isysroot ${SYSROOT} -L./qy265 -framework Foundation -framework UIKit -lqycommon -lqydecoder -lc++" \
 	--enable-gpl \
 	--enable-version3 \
 	--enable-nonfree \
@@ -40,4 +43,4 @@ LENTHEVCDEC=./thirdparty/lenthevcdec
 	--disable-bzlib \
 	--disable-encoders \
 	--disable-muxers \
-	--enable-liblenthevcdec \
+	--enable-decoder=libqy265
